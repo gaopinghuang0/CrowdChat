@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- (c) Copyright 2015 Purdue University - MIT License -->
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Find your true need</title>
+	<link rel="stylesheet" type="text/css" href="{{ static_url("perfect-scrollbar.css") }}">
+	<link rel="stylesheet" type="text/css" href="{{ static_url("main.css") }}">
+	
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+	<script src="{{ static_url("perfect-scrollbar.js") }}"></script>
+	<script src="{{ static_url("main.js") }}"></script>
+</head>
+
+<body>
+  <div class="main">
+	<!-- For question and instruction -->
+	<div class="up">
+		<div class="question"><h1>Help me find my real need of a cellphone</h1></div>
+		<div class="requirement"></div>
+		<div class="instruction">
+		<ol>
+		<li>Chat in the ChatRoom (left) and ask inspiring questions</li>
+		<li>Click on the reasonable chat messages to push them to Pending (right)</li>
+		<li>Requester will handle the Pending messages 
+		(<span style="color:orange">orange</span>:pending, <span style="color:#0f0">green</span>:agreed)</li>
+		</ol>
+		</div>
+	</div>
+	
+	<div class="left">
+		<div class="dialog_header"><h2>ChatRoom <span id="roommode">(worker)</span></h2></div>
+		<!-- Container for messages -->
+		<div id="messages_display"><ul></ul></div>
+		<!-- Text input for new messages -->
+		<input id="message_input" type="text">
+	</div>
+	
+	<div class="right">
+		<div class="dialog_header"><h2>Pending</h2></div>
+		<!-- Container for candidate message to be rated by requester -->
+		<div id="candidates_container" class="{{ workmode[0] }}">
+		<ul></ul>
+		</div>
+	</div>
+	
+	<div class="clear"></div>
+	
+	<!-- For copyright and feedback -->
+	<div class="footer">
+	<input type="hidden" id="some_setting" reqid="{{ records[0]['requester_id']}}"
+	 taskid="{{records[0]['task_id']}}" uniquecode="{{records[0]['unique_code']}}"></div>
+  </div>
+
+</body>
+</html>
+<!-- vim: set fileencoding=utf-8 tabstop=2 shiftwidth=2 expandtab: -->

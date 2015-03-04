@@ -1,0 +1,147 @@
+/* (c) Copyright 2015 Purdue University - MIT License*/
+
+h1, h2, h3, h4, h5, h6 {
+	margin:0;
+	padding:0;
+}
+
+.main {
+	margin:0 auto;
+	width:1000px;
+	font-family:verdana, sans-serif;
+}
+
+.question {
+	text-align: center;
+}
+
+.up {
+	background-color: #fff;
+}
+
+.requirement, .instruction {
+	margin:0 auto;
+	width:500px;
+}
+
+.left {
+	float:left;
+	width:580px;
+}
+
+.right {
+	float:right;
+	width:400px;
+}
+
+.up, .left, .right {
+	border:1px solid green;
+	border-radius:6px;
+}
+
+.clear {
+	clear:both;
+}
+
+.dialog_header {
+	padding:8px;
+	color:white;
+	background-color: #9C0;
+	font-weight:bold;
+}
+
+#messages_display ul, #candidates_container ul{margin:0;padding:0;}
+#messages_display {
+	position:relative;
+	max-height:420px;
+	overflow:hidden;
+}
+
+#candidates_container {
+	position:relative;
+	max-height:443px;
+	overflow:hidden;
+}
+
+.message {
+	padding:       0.2em;
+    margin:        0.2em;
+    font-size:     16px;
+    list-style:    none;
+}
+
+.message span {
+    padding:       0.2em;
+    margin:        0.2em;
+    max-width:     400px;
+    border:        1px solid lightGray;
+    border-radius: 0.2em;
+    cursor:        pointer;
+    display:       inline-block;
+}
+
+.message span:hover {
+	background-color: lightGray;
+}
+
+.othermess {
+	text-align:left;
+}
+
+.mymess {
+	text-align:right;
+}
+.mymess span{
+	background:#9ACD32;
+	color:#fff;
+}
+
+.reqmess span {
+	background-color: #87CEFA;
+	color:#fff;
+}
+
+.pending {
+    padding:       0.2em;
+    margin:        0.2em;
+    font-size:     16px;
+    list-style:    none;
+    border:        1px solid lightGray;
+    border-radius: 0.2em;
+    background:    #ffeaaa;
+    cursor:        pointer;
+}
+
+.prompt {
+	float:right;
+	margin-right:10px;
+	display:none;
+}
+
+.pending:hover .prompt{
+	display:inline;
+}
+
+.agreed {
+	background:#0f0;
+}
+
+#message_input {
+	width:565px;
+    padding: 0.2em;
+    margin: 0.2em;
+    border-color: #6cf;
+    border-width: 2px;
+    border_radius:2px;
+    font-size:14px;
+    font-family:verdana, sans-serif;
+}
+
+.head_img {
+	display:inline-block;
+}
+.head_img img{
+	width:18px;
+	height: 18px;
+}
+
