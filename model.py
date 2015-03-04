@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+# (c) Copyright 2015 Purdue University
+#
+# Author: Gaoping Huang - https://github.com/gaopinghuang0
+# License: MIT License - http://opensource.org/licenses/MIT
+# Version: 0.1
+
+
 from __future__ import division, unicode_literals # boilerplate
 from datetime import datetime
 import random, string, json
@@ -33,7 +40,7 @@ def decrypt_id(test):
 
 class InOut(object):
     
-    ''' Handle I/O.'''
+    ''' Handle data in and out.'''
     
     def __init__(self, data):
         self.edit_time =  str(datetime.now())
@@ -47,7 +54,7 @@ class InOut(object):
         '''
         Receive a tuple of db instance and return list of dist.
         
-        For example, in the form of [{'id':1}, {'text':'xxx'}].
+        For example, return a list with the form of [{'id':1}, {'text':'xxx'}].
         The list is still editable.
         '''
         results = []
@@ -61,6 +68,7 @@ class InOut(object):
 
 class ModifyData(InOut):
     
+    # insert new message
     def insert_message(self):
         if len(self.message) > 0:
             db.insert('message', text=self.message, worker_id=self.worker_id, \
@@ -68,7 +76,9 @@ class ModifyData(InOut):
 
 
 class FetchDataWithInput(InOut):
-     
+    
+    ''' Fetch data with input, like task_id or worker_id. ''' 
+    
     def fetch_all_messages(self):
         records = tuple(db.select('message',
                                    where="task_id=$task_id",
