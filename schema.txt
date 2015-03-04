@@ -21,4 +21,12 @@ CREATE TABLE if not exists message (id integer primary key autoincrement,
                              task_id integer, valid integer default 1);               
                              
 CREATE TABLE if not exists candidate (id integer primary key autoincrement,
-                            message_id integer, worker_id integer, edit_time text);                             
+                            message_id integer, worker_id integer, edit_time text);   
+                            
+CREATE TABLE if not exists pending_record (id integer primary key autoincrement,
+                             worker_id text, mess_id integer,
+                             task_id integer, edit_time text, valid integer default 1); 
+                             
+CREATE TABLE if not exists rating_record (id integer primary key autoincrement,
+                             mess_id integer, temp_rating integer,
+                             task_id integer, edit_time text);                                                         

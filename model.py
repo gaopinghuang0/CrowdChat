@@ -20,7 +20,7 @@ import web
 hashids = Hashids(salt="This is tornado salt", min_length=6)
 
 # webpy db
-db = web.database(dbn="sqlite", db='data/main.sqlite')
+db = web.database(dbn="sqlite", db='data/crowdchat.sqlite')
 
 def generate_unique_code(size=8, chars=string.ascii_uppercase + 
                     string.ascii_lowercase + string.digits):
@@ -74,6 +74,19 @@ class ModifyData(InOut):
             db.insert('message', text=self.message, worker_id=self.worker_id, \
                         task_id=self.task_id, edit_time=self.edit_time)
 
+    # insert new pending message
+    def insert_pending_message(self):
+        if isinstance(self.task_id, int):
+            db.insert('pending_record', worker_id=self.worker_id, mess_id=self.mess_id, \
+                      task_id=self.task_id, edit_time=self.edit_time)
+            
+    # insert into table rating_record
+    # and update the rating column in table message          
+    def update_ratings(self):
+        db.insert('rating_record', task_id=self.task_id, mess_id=self.mess_id, \
+                  temp_rating=self.rating, edit_time=self.edit_time)
+        db.update('message', where="id=$id", vars={'id':self.mess_id}, rating=self.rating)
+
 
 class FetchDataWithInput(InOut):
     
@@ -85,7 +98,24 @@ class FetchDataWithInput(InOut):
                                    vars={"task_id":self.task_id}))
         messages = self.tuple_to_list(records)
         return messages
-
+    
+    def fetch_all_pendings(self):
+        assert isinstance(self.task_id, int)
+        records = tuple(db.query('''SELECT message.text AS text, pending_record.mess_id AS id 
+                                from message, pending_record where
+                                pending_record.task_id = %d and message.id=pending_record.mess_id
+                                GROUP BY pending_record.mess_id;'''
+                                 % (self.task_id)))
+        pendings = self.tuple_to_list(records)
+        return pendings
+    
+    def fetch_all_ratings(self):
+        records = tuple(db.query('''SELECT id from message where rating=1 and id in
+                                (SELECT mess_id from pending_record where task_id=%d);'''
+                                 % (self.task_id)))
+        ratings = self.tuple_to_list(records)
+        return ratings
+    
 class FetchDataWithout(object):
     
     ''' Fetch data with no input or match condition. '''

@@ -22,20 +22,28 @@ g_messages = []     # list of messages, each as plain text
 g_waiters  = set()  # set of Future objects, one for each waiting /update request
 g_pendings = []
 g_pending_waiters = set()
-g_pending_num = 0
-
+g_ratings  = []
+g_rating_waiters = set()
 
 class MainHandler(web.RequestHandler):
     def get(self):
         # fetch random task
         records = model.FetchDataWithout().fetch_random_task()
+        # records[0] means the only one task
         messages = model.FetchDataWithInput(records[0]).fetch_all_messages()
+        total_waiters = len(g_waiters)
         for message in messages:
             if message not in g_messages:
                 g_messages.append(message)
-        workmode= ["requester", "normal"]
+        pendings = model.FetchDataWithInput(records[0]).fetch_all_pendings()
+        for pending in pendings:
+            if pending not in g_pendings:
+                g_pendings.append(pending)
+        global g_ratings
+        g_ratings = model.FetchDataWithInput(records[0]).fetch_all_ratings()
+
         # Serve index.html blank.  It will fetch new messages upon loading.
-        self.render("index.html", workmode=workmode, records=records)
+        self.render("index.html", records=records)
 
 class NewHandler(web.RequestHandler):
     def post(self):
@@ -54,7 +62,6 @@ class NewHandler(web.RequestHandler):
                 g_messages.append(message)
         # Print a message to the log so we can see what is going on
         logging.info("Sending new message to %r listeners", len(g_waiters))
-
         # Notify all waiting /update requests
         for future in g_waiters:
 
@@ -87,11 +94,19 @@ class UpdateHandler(web.RequestHandler):
 
 class AppendHandler(web.RequestHandler):
     def post(self):
-        # Get new message sent by browser and append it to the global message list
-        message = self.get_argument("pending_message")
-        worker_id = self.get_argument("worker_id")
-        g_pending_num = self.get_argument("pending_num")
-        g_pendings.append(message)
+        # Get new message sent by browser and append it to the global pending_message list
+        pending_posts = {
+                 'worker_id'   : self.get_argument("worker_id"),
+                 'task_id'     : self.get_argument("task_id"),
+                 'mess_id'     : self.get_argument("mess_id")
+                 }
+        # insert into table pending_record
+        model.ModifyData(pending_posts).insert_pending_message()
+        # fetch all pending messages with task_id
+        pendings = model.FetchDataWithInput(pending_posts).fetch_all_pendings()
+        for pending in pendings:
+            if pending not in g_pendings:
+                g_pendings.append(pending)
         # Print a message to the log so we can see what is going on
         logging.info("Sending new message to %r listeners", len(g_waiters))
     
@@ -108,21 +123,68 @@ class PendingHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
         # Browser sends the number of messages it has seen so far.
-        g_pending_num = int(self.get_argument("pending_number", 0))
+        pending_num = int(self.get_argument("pending_number", 0))
         
         # If there are no new messages (other than what browser has already seen), then wait.
-        if g_pending_num == len(g_pendings):
+        if pending_num == len(g_pendings):
             self._future = concurrent.Future() # Create an empty Future object
             g_pending_waiters.add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
+            # print 'I am in pendinghandler, g_pendings=', g_pendings
             self.write({"pendings": g_pendings})  # This sets Content-Type header automatically
 
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
         g_pending_waiters.remove(self._future) # Remove this Future object from the global set of waiters
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s)
+
+
+class RateHandler(web.RequestHandler):
+    def post(self):
+        # Get new message sent by browser and append it to the global pending_message list
+        rate_posts = {
+                 'task_id'     : self.get_argument("task_id"),
+                 'mess_id'     : self.get_argument("mess_id"),
+                 'rating'      : self.get_argument("rating")
+                 }
+        
+        # insert into table rating_record
+        # and update the rating column in table message
+        model.ModifyData(rate_posts).update_ratings()
+        
+        # fetch all of the agreed messages with task_id
+        global g_ratings
+        g_ratings = model.FetchDataWithInput(rate_posts).fetch_all_ratings()
+
+        # Print a message to the log so we can see what is going on
+        logging.info("Sending new message to %r listeners", len(g_rating_waiters))
+        # Notify all waiting /update requests
+        for future in g_rating_waiters:
+    
+            # Set the result of the Future object yielded by the request's coroutine
+            future.set_result(g_ratings)
+    
+        # Clear the waiters list
+        g_rating_waiters.clear()
+
+class CastRateHandler(web.RequestHandler):
+    @gen.coroutine
+    def post(self):
+        agreed_num = int(self.get_argument("agreed_num", 0))
+        if agreed_num == len(g_ratings):
+            self._future = concurrent.Future() # Create an empty Future object
+            g_rating_waiters.add(self._future)                # Add it to the global set of waiters
+            yield self._future                         # WAIT until future.set_result(..) is called
+
+        # If browser is still connected, then send the entire list of messages as JSON
+        if not self.request.connection.stream.closed():
+            self.write({"ratings": g_ratings})  # This sets Content-Type header automatically
+
+    def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
+        g_rating_waiters.remove(self._future) # Remove this Future object from the global set of waiters
+        self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s)    
 
 
 def main():
@@ -132,7 +194,9 @@ def main():
           (r"/new",       NewHandler),
           (r"/update",    UpdateHandler),
           (r"/append",    AppendHandler),
-          (r"/pending",   PendingHandler) ],
+          (r"/pending",   PendingHandler),
+          (r"/rate",      RateHandler),
+          (r"/cast_rate", CastRateHandler) ],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
         static_path   = os.path.join(os.path.dirname(__file__), "static"),
         debug         = DEBUG,

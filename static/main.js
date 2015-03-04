@@ -1,30 +1,32 @@
 /* (c) Copyright 2015 Purdue University - MIT License */
-
-var g_num_seen = 0;  // global variable:  number of messages seen so far
-var g_pending_num = 0;
-var worker_id;
-var req_id;
-var task_id;
-var unique_code;
+(function(){
+	/* Some global variables */
+	var g_num_seen = 0; 
+	var g_pending_num = 0;
+	var g_agreed_num = 0;  
+	var g_worker_id;
+	var req_id;
+	var g_task_id;
+	var unique_code;
 
 jQuery(document).ready(function() {
     $("#message_input").on("keypress", handle_new_message_event);
 	$("#messages_display").perfectScrollbar();
 	$("#candidates_container").perfectScrollbar();
 	$("#message_input").select();
-	worker_id = get_all_ids().worker_id;
+	g_worker_id = get_all_ids().worker_id;
 	req_id = get_all_ids().req_id;
-	task_id = get_all_ids().task_id;
+	g_task_id = get_all_ids().task_id;
 	unique_code = get_all_ids().unique_code;
-	console.log(req_id, worker_id);
-	if (req_id == worker_id) {
+	if (req_id == g_worker_id) {
 		$("#roommode").text('(requester)');
 	} else {
-		var worknum = worker_id == 'BBB' ? 1:2;
+		var worknum = g_worker_id == 'BBB' ? 1:2;
 		$("#roommode").text('(worker'+worknum+')');
 	}
     poll();  // Check for new messages
-    pending_poll(); // Check for new pending
+    pending_poll(); // Check for new pending messages
+    rating_poll();  // Check for new ratings
 });
 
 function handle_new_message_event(evt) {
@@ -41,8 +43,8 @@ function handle_new_message_event(evt) {
             jQuery.ajax({
                 url: "/new",
                 data: { message   : message_input.value,
-                		worker_id : worker_id,
-                		task_id   : task_id },
+                		worker_id : g_worker_id,
+                		task_id   : g_task_id },
                 type: "POST",
                 success: function(data, text_status, jq_xhr) {
                     message_input.value = "";
@@ -73,26 +75,28 @@ function poll() {
 				var html = message.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 				var each_worker_id = message.worker_id;
 				var each_time = message.edit_time;
-				if (each_worker_id == worker_id) {  // it's me
-					html = '<li class="message mymess"><span>' + html + '</span>'+
+				var each_id = message.id;
+				
+				if (each_worker_id == g_worker_id) {  // it's me
+					html = '<li class="message mymess"><span messid="'+each_id+'">' + html + '</span>'+
 					'<div class="head_img"><img src="./static/images/head.jpg" alt="worker"></div></li>';
 				}
 				else {  // others' message
 					if (each_worker_id == req_id)  {  // requster's mess
-						html = '<li class="message othersmess reqmess"><span>Requester: ' +
+						html = '<li class="message othersmess reqmess"><span messid="'+each_id+'">Requester: ' +
 						       html + '</span></li>';
 					}
 					else {
 						html = '<li class="message othersmess">'+
 							'<div class="head_img"><img src="./static/images/head.jpg"alt="worker"></div>' +
-							'<span>' + html + '</span></li>';
+							'<span messid="'+each_id+'">' + html + '</span></li>';
 					}
 				}
 				html_parts.push(html);
 			}
 			$("#messages_display ul").html(html_parts.join(""));
 			scroll_to_view('left');
-			click_to_pending();
+			push_to_pending_handler();
             // Record the number of messages
 			g_num_seen = data.messages.length;
 			
@@ -114,36 +118,87 @@ function pending_poll() {
 		data: {pending_number: g_pending_num},
 		success: function(data, text_status, jq_xhr) {
 			// for Pending
-			if ($(".requester").length > 0) {  // requester mode
+			if (g_worker_id == req_id) {  // requester mode
 				var pending_parts = [];
 				for(var i = 0; i < data.pendings.length; i++) {
 	                var text2 = data.pendings[i];
-					var html2 = text2.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-	                html2 = '<li class="pending">' + html2 + 
-	                		"<span class='prompt'>(Click to agree/disagree)</span>"
-	                		+'</li>';
+					var html2 = text2.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+					var pmess_id = 'pmessid' + text2.id; /* pending message id */
+
+	                html2 = '<li class="pending" id="'+ pmess_id +'">' + html2 + 
+	                		"<span class='prompt_content'><span class='prompt'>(Click to agree/disagree)" +
+	                		"</span></span></li>";
 	                pending_parts.push(html2);
 				}
 				$("#candidates_container ul").html(pending_parts.join(""));
 			}
 			else {  // worker mode
-				
+				var pending_parts = [];
+				for(var i = 0; i < data.pendings.length; i++) {
+	                var text2 = data.pendings[i];
+					var html2 = text2.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+					var pmess_id = 'pmessid' + text2.id; /* pending message id */
+
+	                html2 = '<li class="pending" style="cursor:auto;" id="'+ pmess_id +'">' + html2 
+	                		+'</li>';
+	                pending_parts.push(html2);
+				}
+				$("#candidates_container ul").html(pending_parts.join(""));
 			}
 			scroll_to_view('right');
-            // Record the number of messages
+			
+			/* requester rate_pending_handler */
+			rate_pending_handler();
+			
+            /* Record the number of messages */
 			g_pending_num = data.pendings.length;
-			
-			$(".pending").on('click', function(){
-				$(this).toggleClass("agreed");
-			});
-			
+			/* Update the number of total pending */
+			$('.total_count').text(g_pending_num);			
             // Check for new messages (again)
 			pending_poll();
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			window.setTimeout(poll, 1000);
+			window.setTimeout(pending_poll, 1000);
+		}
+	});
+}
+
+
+function rating_poll() {
+	jQuery.ajax({
+		url: "/cast_rate",
+		type: "POST",
+		data: {agreed_num: g_agreed_num},
+		success: function(data, text_status, jq_xhr) {
+			var agreed_parts = [];
+			for (var i = 0; i < data.ratings.length; i++) {
+				var this_id = 'pmessid' + data.ratings[i].id;
+				agreed_parts.push(this_id);
+			}
+			$("#candidates_container ul").each(function(){
+				$(this).find('.pending').each(function(){
+					var curr = $(this);
+					curr_id = curr.attr("id");
+					if (agreed_parts.indexOf(curr_id) >= 0) {
+						curr.addClass('agreed');
+					} else {
+						curr.removeClass('agreed');
+					}
+				});
+			});
+            /* Record the number of total agreed */
+			g_agreed_num = data.ratings.length;
+			/* Update the number of agreed pending */
+			$('.agreed_count').text(g_agreed_num);
+            /* Check for new ratings (again) */
+			rating_poll();
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+            /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
+			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			window.setTimeout(rating_poll, 1000);
 		}
 	});
 }
@@ -165,13 +220,15 @@ function scroll_to_view(flag) {
 		  return this.each(function(){
 		    var scrollPane = $(this);
 		    var scrollTarget = (typeof settings.scrollTarget == "number") ? settings.scrollTarget : $(settings.scrollTarget);
-		    var scrollY = (typeof scrollTarget == "number") ? scrollTarget : scrollTarget.offset().top + scrollPane.scrollTop() - parseInt(settings.offsetTop);
+		    var scrollY = (typeof scrollTarget == "number") ? scrollTarget : scrollTarget.offset().top + 
+		    				scrollPane.scrollTop() - parseInt(settings.offsetTop);
 		    scrollPane.animate({scrollTop : scrollY }, parseInt(settings.duration), settings.easing, function(){
 		      if (typeof callback == 'function') { callback.call(this); }
 		    });
 		  });
 		}
 	
+	/* Scroll to the bottom list item once there is new message */
 	if ($("#messages_display ul li").length > 0 && flag == 'left') {
 		var left_last = $("#messages_display ul li:last");
 		$("#messages_display").scrollTo(left_last);
@@ -182,20 +239,50 @@ function scroll_to_view(flag) {
 	}
 }
 
-function click_to_pending() {
+/*
+ * Click on the message (<span>), get the message_id and
+ * send to the server
+ */
+function push_to_pending_handler() {
 	$("#messages_display ul li span").click(function(){
 		var pending_message = $(this).html();
+		var this_id = parseInt($(this).attr("messid"));
 		$.ajax({
 			url:"/append",
-			data:{pending_message:pending_message,
-				worker_id:worker_id,
-				pending_num:g_pending_num},
+			data:{
+				worker_id       : g_worker_id,
+				mess_id         : this_id,
+				task_id         : g_task_id,
+				},
 			type: "POST"
 		});
 	});
 }
 
+/*
+ * requester rate_pending_handler
+ */ 
+function rate_pending_handler() {
+	if (g_worker_id == req_id) {  /* only requester can rate */
+		$(".pending").on('click', function(){
+			var mess_id = $(this).attr('id').slice(7);
+			var rating = ($(this).hasClass('agreed')) ? 0 : 1;
+			$.ajax({
+				url:"/rate",
+				type: "POST",
+				data: {
+					mess_id    : mess_id,
+					task_id    : g_task_id,
+					rating     : rating,
+				}
+			});
+		});
+	}
+}
 
+/**
+ * Module to get all useful ids
+ */
 function get_all_ids() {
 	var setting = $("#some_setting");
 	var worker_array = ['AAA', 'BBB', 'CCC'];
@@ -224,4 +311,4 @@ function get_all_ids() {
 	return ids;
 }
 
-
+})(jQuery);

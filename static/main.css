@@ -19,9 +19,9 @@ h1, h2, h3, h4, h5, h6 {
 	background-color: #fff;
 }
 
-.requirement, .instruction {
+.requirement, .instruction{
 	margin:0 auto;
-	width:500px;
+	width:700px;
 }
 
 .left {
@@ -109,17 +109,30 @@ h1, h2, h3, h4, h5, h6 {
     border:        1px solid lightGray;
     border-radius: 0.2em;
     background:    #ffeaaa;
+    position:      relative;
     cursor:        pointer;
 }
 
-.prompt {
-	float:right;
-	margin-right:10px;
-	display:none;
+li.pending:hover .prompt_content {opacity:1;}
+.prompt_content {
+	position:absolute;
+	top:3px;
+	left:180px;
+	background: rgba(0, 0, 0, 0.5);
+	color: #fff;
+	cursor:pointer;
+	display: table;
+	opacity:0;
+	-webkit-transition: opacity 500ms;
+	-moz-transition: opacity 500ms;
+	-o-transition: opacity 500ms;
+	transition: opacity 500ms;
 }
 
-.pending:hover .prompt{
-	display:inline;
+.prompt {
+	display: table-cell;
+	text-align: center;
+	vertical-align: middle;
 }
 
 .agreed {
