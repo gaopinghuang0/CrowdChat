@@ -106,7 +106,7 @@ function poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			window.setTimeout(poll, 1000);
+			setTimeout(poll, 1000);
 		}
 	});
 }
@@ -160,7 +160,7 @@ function pending_poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			window.setTimeout(pending_poll, 1000);
+			setTimeout(pending_poll, 1000);
 		}
 	});
 }
@@ -198,7 +198,7 @@ function rating_poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			window.setTimeout(rating_poll, 1000);
+			setTimeout(rating_poll, 1000);
 		}
 	});
 }

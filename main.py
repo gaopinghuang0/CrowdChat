@@ -31,7 +31,6 @@ class MainHandler(web.RequestHandler):
         records = model.FetchDataWithout().fetch_random_task()
         # records[0] means the only one task
         messages = model.FetchDataWithInput(records[0]).fetch_all_messages()
-        total_waiters = len(g_waiters)
         for message in messages:
             if message not in g_messages:
                 g_messages.append(message)
