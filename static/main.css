@@ -158,3 +158,42 @@ li.pending:hover .prompt_content {opacity:1;}
 	height: 18px;
 }
 
+li span .selected {
+	background_color: #17F5CC;
+	color: white;
+	z-index:100;
+}
+
+.messagepop {
+  font-family: arial;
+  background-color: #fff;
+  border: 1px gray solid;
+  border-radius: 5px;
+  position:relative;
+  z-index: 50;
+}
+
+.messagepop a {
+	text-decoration: none;
+	padding-left: 10px;
+	padding-right: 10px;
+	border-right: 1px gray solid;
+}
+
+.messagepop a:last-child {
+	border: 0px;
+}
+
+.messagepop a:visited {
+	color: blue;
+}
+
+.pop1 {
+	display: none;
+	width: 162px;
+}
+
+.pop2 {
+	display: none;
+	width: 314px;
+}

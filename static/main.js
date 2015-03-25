@@ -24,6 +24,22 @@ jQuery(document).ready(function() {
 		var worknum = g_worker_id == 'BBB' ? 1:2;
 		$("#roommode").text('(worker'+worknum+')');
 	}
+	
+	// 1. click on the message to show mark (question and cancel)
+	
+	// Opt1. automatically mark the input with ? as question
+	
+	// 2. click on the question button, change its color
+	
+	// 3. click on the answer button, it is related to this question
+	
+	// 4. after answer it, push the Q/A pair to the right
+	
+	// 5. for requester, it has some buttons to answer it and reject it
+	
+	// 6. for requester, he/she can only answer the meaningful question, and approve it atomitically
+	
+	
     poll();  // Check for new messages
     pending_poll(); // Check for new pending messages
     rating_poll();  // Check for new ratings
@@ -96,6 +112,12 @@ function poll() {
 			}
 			$("#messages_display ul").html(html_parts.join(""));
 			scroll_to_view('left');
+			
+			// click message to show prompt 
+			// for worker, just mark as question and cancel
+			// for requester, it has answer and reject
+			click_message_prompt('.pop1');
+			
 			push_to_pending_handler();
             // Record the number of messages
 			g_num_seen = data.messages.length;
@@ -244,20 +266,101 @@ function scroll_to_view(flag) {
  * send to the server
  */
 function push_to_pending_handler() {
-	$("#messages_display ul li span").click(function(){
-		var pending_message = $(this).html();
-		var this_id = parseInt($(this).attr("messid"));
-		$.ajax({
-			url:"/append",
-			data:{
-				worker_id       : g_worker_id,
-				mess_id         : this_id,
-				task_id         : g_task_id,
-				},
-			type: "POST"
-		});
-	});
+	
+	/* need to modify */
+	
+//	$("#messages_display ul li span").click(function(){
+//		var pending_message = $(this).html();
+//		var this_id = parseInt($(this).attr("messid"));
+//		$.ajax({
+//			url:"/append",
+//			data:{
+//				worker_id       : g_worker_id,
+//				mess_id         : this_id,
+//				task_id         : g_task_id,
+//				},
+//			type: "POST"
+//		});
+//	});
 }
+
+
+/* 
+ * Click message to show prompt 
+ * for worker, just mark as question and cancel
+ * for requester, it has answer and reject
+ */
+function click_message_prompt(mode) {
+	var mess = $(".message span");
+	var prev = null;  // to store previous selected item
+	mess.on('click',function(){
+		var now = list_index($(this));
+		
+		if (prev == null) {
+			prev = now;
+		} 
+		if (prev == now) {
+			var pos = $(this)[0].getBoundingClientRect();
+
+			pop_here(pos);  // change pop's position
+			
+			if ($(this).hasClass('selected')) {
+				deselected($(this));
+			} else {
+				$(this).addClass('selected');
+				$(mode).slideFadeToggle();
+			}
+			//return false;
+		}
+		else {
+			$("#messages_display ul li").eq(prev).find("span").removeClass('selected');
+			var pos = $(this)[0].getBoundingClientRect();
+			pop_here(pos);  // change pop's position
+			$(mode).css('display', 'block');
+			prev = now;
+		}
+	});
+	
+	$('.close').on('click', function(){
+		deselected($("messagepop"));
+		return false;
+	});
+
+	$('.mark_question').on('click',function(){
+		
+	});
+	function deselected(e) {
+		$(mode).slideFadeToggle(function(){
+			e.removeClass("selected");
+		});
+	}
+	
+	function list_index(obj) {
+		return obj.parent().parent().children().index(obj.parent());
+	}
+	
+	function pop_here(pos){
+		var chat = $('.left')[0].getBoundingClientRect();
+		var popup = $(mode).width();  
+		var left = pos.left;
+		if (pos.left + popup >= chat.right) {
+			left = pos.right - popup;
+		}
+		$(mode).css({
+			position : 'absolute',
+			top: pos.top - pos.height,
+			left: left,
+		});
+	}
+	
+	$.fn.slideFadeToggle = function(easing, callback) {
+		return this.animate({opacity: 'toggle', height:"toggle"}, 
+				'fast', easing, callback);
+	};
+
+}
+
+
 
 /*
  * requester rate_pending_handler
