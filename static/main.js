@@ -3,11 +3,12 @@
 	/* Some global variables */
 	var g_num_seen = 0; 
 	var g_pending_num = 0;
-	var g_agreed_num = 0;  
+	var g_questioned_num = 0;  
 	var g_worker_id;
 	var req_id;
 	var g_task_id;
 	var unique_code;
+	var g_url_prefix = '';
 
 jQuery(document).ready(function() {
     $("#message_input").on("keypress", handle_new_message_event);
@@ -37,12 +38,13 @@ jQuery(document).ready(function() {
 	
 	// 5. for requester, it has some buttons to answer it and reject it
 	
-	// 6. for requester, he/she can only answer the meaningful question, and approve it atomitically
+	// 6. for requester, he/she can only answer the meaningful question, and approve it automatically
 	
 	
     poll();  // Check for new messages
     pending_poll(); // Check for new pending messages
-    rating_poll();  // Check for new ratings
+    // rating_poll();  // Check for new ratings
+    marking_poll();  // Check for new marking question or rejecting
 });
 
 function handle_new_message_event(evt) {
@@ -116,7 +118,12 @@ function poll() {
 			// click message to show prompt 
 			// for worker, just mark as question and cancel
 			// for requester, it has answer and reject
-			click_message_prompt('.pop1');
+			if (g_worker_id == req_id) {
+				click_message_prompt('.pop2');
+			} else {
+				click_message_prompt('.pop1');
+			}
+			
 			
 			push_to_pending_handler();
             // Record the number of messages
@@ -169,8 +176,6 @@ function pending_poll() {
 			}
 			scroll_to_view('right');
 			
-			/* requester rate_pending_handler */
-			rate_pending_handler();
 			
             /* Record the number of messages */
 			g_pending_num = data.pendings.length;
@@ -225,41 +230,118 @@ function rating_poll() {
 	});
 }
 
-
-function scroll_to_view(flag) {
-	/***
-	 * jQuery .scrollTo 
-	 * Adapted from http://lions-mark.com/jquery/scrollTo/
-	 */
-	$.fn.scrollTo = function( target, options, callback ){
-		  if(typeof options == 'function' && arguments.length == 2){ callback = options; options = target; }
-		  var settings = $.extend({
-		    scrollTarget  : target,
-		    offsetTop     : 50,
-		    duration      : 500,
-		    easing        : 'swing'
-		  }, options);
-		  return this.each(function(){
-		    var scrollPane = $(this);
-		    var scrollTarget = (typeof settings.scrollTarget == "number") ? settings.scrollTarget : $(settings.scrollTarget);
-		    var scrollY = (typeof scrollTarget == "number") ? scrollTarget : scrollTarget.offset().top + 
-		    				scrollPane.scrollTop() - parseInt(settings.offsetTop);
-		    scrollPane.animate({scrollTop : scrollY }, parseInt(settings.duration), settings.easing, function(){
-		      if (typeof callback == 'function') { callback.call(this); }
-		    });
-		  });
+/*
+ * Handler for popup mode
+ * mark or unmark, reject or undo one message, answer question
+ */ 
+function popup_mess_handler(obj, condition) {
+	var mess_id = obj.attr('messid');  // get messid
+	var num = (obj.hasClass(condition)) ? 0 : 1; 
+	$.ajax({
+		url: url_for(condition),
+		type: "POST",
+		data: {
+			mess_id    : mess_id,
+			task_id    : g_task_id,
+			num        : num,
 		}
-	
-	/* Scroll to the bottom list item once there is new message */
-	if ($("#messages_display ul li").length > 0 && flag == 'left') {
-		var left_last = $("#messages_display ul li:last");
-		$("#messages_display").scrollTo(left_last);
-	}
-	if ($("#candidates_container ul li").length > 0 && flag == 'right') {
-		var right_last = $("#candidates_container ul li:last");
-		$("#candidates_container").scrollTo(right_last);
-	}
+	});
 }
+
+/*
+ * Check for new marking question or rejecting
+ */
+function marking_poll() {
+	jQuery.ajax({
+		url: url_for("cast_mark"),
+		type: "POST",
+		data: {questioned_num: g_questioned_num},
+		success: function(data, text_status, jq_xhr) {
+			var agreed_parts = [];
+			for (var i = 0; i < data.questions.length; i++) {
+				var this_id = data.questions[i].id;
+				agreed_parts.push(this_id);
+			}
+			$("#messages_display ul").each(function(){
+				$(this).find('.message').each(function(){
+					var curr = $(this).find('span').last();
+					curr_id = parseInt(curr.attr("messid"));
+					if (agreed_parts.indexOf(curr_id) >= 0) {
+						curr.addClass('questioned');
+						if (curr.prev('.quest_mark').length == 0) {
+							curr.before("<span class='quest_mark'>&quest;</span>");
+						}
+					} else {
+						curr.removeClass('questioned');
+						if (curr.prev('.quest_mark').length > 0) {
+							curr.prev('.quest_mark').remove();
+						}
+					}
+				});
+			});
+			
+            /* Record the number of total agreed */
+			g_questioned_num = data.questions.length;
+			/* Update the number of agreed pending */
+			$('.total_count').text(g_questioned_num);
+            /* Check for new ratings (again) */
+			marking_poll();
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+            /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
+			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			setTimeout(marking_poll, 1000);
+		}
+	});
+}
+
+/*
+ * Check for new marking question or rejecting
+ */
+function reject_poll() {
+	jQuery.ajax({
+		url: url_for("cast_reject"),
+		type: "POST",
+		data: {questioned_num: g_questioned_num},
+		success: function(data, text_status, jq_xhr) {
+			var agreed_parts = [];
+			for (var i = 0; i < data.questions.length; i++) {
+				var this_id = data.questions[i].id;
+				agreed_parts.push(this_id);
+			}
+			$("#messages_display ul").each(function(){
+				$(this).find('.message').each(function(){
+					var curr = $(this).find('span').last();
+					curr_id = parseInt(curr.attr("messid"));
+					if (agreed_parts.indexOf(curr_id) >= 0) {
+						curr.addClass('questioned');
+						if (curr.prev('.quest_mark').length == 0) {
+							curr.before("<span class='quest_mark'>&quest;</span>");
+						}
+					} else {
+						curr.removeClass('questioned');
+						if (curr.prev('.quest_mark').length > 0) {
+							curr.prev('.quest_mark').remove();
+						}
+					}
+				});
+			});
+			
+            /* Record the number of total agreed */
+			g_questioned_num = data.questions.length;
+			/* Update the number of agreed pending */
+			$('.total_count').text(g_questioned_num);
+            /* Check for new ratings (again) */
+			marking_poll();
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+            /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
+			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			setTimeout(marking_poll, 1000);
+		}
+	});
+}
+
 
 /*
  * Click on the message (<span>), get the message_id and
@@ -293,32 +375,28 @@ function push_to_pending_handler() {
 function click_message_prompt(mode) {
 	var mess = $(".message span");
 	var prev = null;  // to store previous selected item
+	var now = null;  // to store the current selected item
 	mess.on('click',function(){
-		var now = list_index($(this));
-		
+		now = list_index($(this));
+
 		if (prev == null) {
 			prev = now;
 		} 
-		if (prev == now) {
-			var pos = $(this)[0].getBoundingClientRect();
-
-			pop_here(pos);  // change pop's position
-			
+		if (prev == now) {			
 			if ($(this).hasClass('selected')) {
 				deselected($(this));
 			} else {
 				$(this).addClass('selected');
 				$(mode).slideFadeToggle();
 			}
-			//return false;
 		}
 		else {
-			$("#messages_display ul li").eq(prev).find("span").removeClass('selected');
-			var pos = $(this)[0].getBoundingClientRect();
-			pop_here(pos);  // change pop's position
+			find_span_by_index(prev).removeClass('selected');
+
 			$(mode).css('display', 'block');
 			prev = now;
 		}
+		stick_pop($(this), $('#messages_display'));
 	});
 	
 	$('.close').on('click', function(){
@@ -327,22 +405,45 @@ function click_message_prompt(mode) {
 	});
 
 	$('.mark_question').on('click',function(){
-		
+		/* mark message as question */
+		// use list index "now" to find the span that is selected
+		var obj = find_span_by_index(now);
+		popup_mess_handler(obj, 'questioned');
+		button_set_color(obj, 'questioned', '.mark_question', 1);
 	});
+	
+	$(".reject_mess").on('click', function(){
+		// mark message as rejected
+		// use list index "now" to find the span that is selected
+		var obj = find_span_by_index(now);
+		popup_mess_handler(obj, 'rejected');
+		button_set_color(obj, 'rejected', '.reject_mess', 1);
+	});
+	
 	function deselected(e) {
 		$(mode).slideFadeToggle(function(){
 			e.removeClass("selected");
 		});
 	}
 	
+	/* return the index number of the clicked message in the ul */
 	function list_index(obj) {
 		return obj.parent().parent().children().index(obj.parent());
 	}
 	
-	function pop_here(pos){
-		var chat = $('.left')[0].getBoundingClientRect();
+	/* the parent is hard coded as #messages_display */
+	function find_span_by_index(ind) {
+		return $("#messages_display ul li").eq(ind).find("span").last();
+	}
+	
+	function stick_pop(target, parent){  // target and parent should be jQuery object
+		var chat = parent[0].getBoundingClientRect();
+		var pos = target[0].getBoundingClientRect();
 		var popup = $(mode).width();  
 		var left = pos.left;
+		
+		parent.unbind("scroll"); // quite nice ^_^
+		
 		if (pos.left + popup >= chat.right) {
 			left = pos.right - popup;
 		}
@@ -350,6 +451,30 @@ function click_message_prompt(mode) {
 			position : 'absolute',
 			top: pos.top - pos.height,
 			left: left,
+		});
+		
+		/* Add special color for clicked event */
+		button_set_color(target, 'questioned', '.mark_question');
+		button_set_color(target, 'rejected', '.reject_mess');
+		button_set_color(target, 'answered', '.answer_ques');
+		
+		if (target.hasClass('questioned')) {
+			$('.mark_question').css("background","#dcdcdc");
+		} else {
+			$('.mark_question').css("background","#fff");
+		}
+		
+		
+		parent.on('scroll', function(e){
+			var curr = target[0].getBoundingClientRect();
+			if (chat.top <= curr.top && curr.top <= chat.bottom) {
+				$(mode).css({
+					top: curr.top - curr.height
+				});
+			} 
+			else {
+				$(mode).css('display', 'none');
+			}
 		});
 	}
 	
@@ -360,6 +485,66 @@ function click_message_prompt(mode) {
 
 }
 
+/* 
+ * Change the color of some button
+ * target is jquery obj
+ * condition and button are strings
+ */
+function button_set_color(target, condition, button, flag) {
+	
+	flag = typeof flag !==  'undefined' ? flag : 0;  // ^_^
+	
+	if (flag == 0) {
+		if (target.hasClass(condition)) {
+			$(button).css("background-color","#dcdcdc");
+		} else {
+			$(button).css("background-color","#fff");
+		}
+	}
+	else if (flag == 1) {  // in operate way
+		if (target.hasClass(condition)) {
+			$(button).css("background-color","#fff");
+		} else {
+			$(button).css("background-color","#dcdcdc");
+		}
+	}
+}
+
+
+function scroll_to_view(flag) {
+	/***
+	 * jQuery .scrollTo 
+	 * Adapted from http://lions-mark.com/jquery/scrollTo/
+	 */
+	$.fn.scrollTo = function( target, options, callback ){
+		  if(typeof options == 'function' && arguments.length == 2){ callback = options; options = target; }
+		  var settings = $.extend({
+		    scrollTarget  : target,
+		    offsetTop     : 50,
+		    duration      : 500,
+		    easing        : 'swing'
+		  }, options);
+		  return this.each(function(){
+		    var scrollPane = $(this);
+		    var scrollTarget = (typeof settings.scrollTarget == "number") ? settings.scrollTarget : $(settings.scrollTarget);
+		    var scrollY = (typeof scrollTarget == "number") ? scrollTarget : scrollTarget.offset().top + 
+		    				scrollPane.scrollTop() - parseInt(settings.offsetTop);
+		    scrollPane.animate({scrollTop : scrollY }, parseInt(settings.duration), settings.easing, function(){
+		      if (typeof callback == 'function') { callback.call(this); }
+		    });
+		  });
+		}
+	
+	/* Scroll to the bottom list item once there is a new message */
+	if ($("#messages_display ul li").length > 0 && flag == 'left') {
+		var left_last = $("#messages_display ul li:last");
+		$("#messages_display").scrollTo(left_last);
+	}
+	if ($("#candidates_container ul li").length > 0 && flag == 'right') {
+		var right_last = $("#candidates_container ul li:last");
+		$("#candidates_container").scrollTo(right_last);
+	}
+}
 
 
 /*
@@ -413,5 +598,10 @@ function get_all_ids() {
 
 	return ids;
 }
+
+function url_for(url) {
+	return url.indexOf('/') == 0 ? (g_url_prefix + url) : (g_url_prefix + '/' + url);
+}
+
 
 })(jQuery);

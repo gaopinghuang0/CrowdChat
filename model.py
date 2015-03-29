@@ -1,3 +1,4 @@
+#!/usr/local/bin/python2.7
 # -*- coding: utf-8 -*-
 # (c) Copyright 2015 Purdue University
 #
@@ -21,22 +22,6 @@ hashids = Hashids(salt="This is tornado salt", min_length=6)
 
 # webpy db
 db = web.database(dbn="sqlite", db='data/crowdchat.sqlite')
-
-def generate_unique_code(size=8, chars=string.ascii_uppercase + 
-                    string.ascii_lowercase + string.digits):
-    return ''.join(random.SystemRandom().choice(chars) for _ in range(size))
-
-def encrypt_id(id):
-    if isinstance(id, unicode):
-        id = int(id)
-    return hashids.encrypt(id)
-
-def decrypt_id(test):
-    try:
-        ids = hashids.decrypt(test)
-        return ids[0]
-    except IndexError:
-        return None
 
 class InOut(object):
     
@@ -86,7 +71,10 @@ class ModifyData(InOut):
         db.insert('rating_record', task_id=self.task_id, mess_id=self.mess_id, \
                   temp_rating=self.rating, edit_time=self.edit_time)
         db.update('message', where="id=$id", vars={'id':self.mess_id}, rating=self.rating)
-
+        
+    # and update the questioned column in table "message"
+    def update_questioned(self):
+        db.update('message', where="id=$id", vars={'id':self.mess_id}, questioned=self.questioned)
 
 class FetchDataWithInput(InOut):
     
@@ -116,6 +104,13 @@ class FetchDataWithInput(InOut):
         ratings = self.tuple_to_list(records)
         return ratings
     
+    # fetch all questioned ids
+    def fetch_all_questions(self):
+        records = tuple(db.query('''SELECT id from message where questioned=1 and task_id=%d;'''
+                                 % (self.task_id)))
+        results = self.tuple_to_list(records)
+        return results
+    
 class FetchDataWithout(object):
     
     ''' Fetch data with no input or match condition. '''
@@ -135,5 +130,22 @@ class FetchDataWithout(object):
                       }
             records.append(record)
         return records
+
+
+def generate_unique_code(size=8, chars=string.ascii_uppercase + 
+                    string.ascii_lowercase + string.digits):
+    return ''.join(random.SystemRandom().choice(chars) for _ in range(size))
+
+def encrypt_id(id):
+    if isinstance(id, unicode):
+        id = int(id)
+    return hashids.encrypt(id)
+
+def decrypt_id(test):
+    try:
+        ids = hashids.decrypt(test)
+        return ids[0]
+    except IndexError:
+        return None
     
    

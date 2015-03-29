@@ -84,6 +84,11 @@ h1, h2, h3, h4, h5, h6 {
 	background-color: lightGray;
 }
 
+.quest_mark {
+	background:red !important;
+	color: white !important;
+}
+
 .othermess {
 	text-align:left;
 }
@@ -165,35 +170,40 @@ li span .selected {
 }
 
 .messagepop {
-  font-family: arial;
-  background-color: #fff;
-  border: 1px gray solid;
-  border-radius: 5px;
-  position:relative;
-  z-index: 50;
+	font-family: arial;
+	background-color: #fff;
+	border: 1px gray solid;
+	border-radius: 5px;
+	position:relative;
+	z-index: 50;
 }
 
 .messagepop a {
 	text-decoration: none;
-	padding-left: 10px;
-	padding-right: 10px;
+	padding: 2px 10px 2px 10px;
 	border-right: 1px gray solid;
+	border-top: 1px gray solid;
+	border-bottom: 1px gray solid;
 }
 
 .messagepop a:last-child {
-	border: 0px;
+	border:0;
 }
 
 .messagepop a:visited {
 	color: blue;
 }
 
+.messagepop a:hover {
+	text-decoration: underline;
+}
+
 .pop1 {
 	display: none;
-	width: 162px;
+	width: 202px;
 }
 
 .pop2 {
 	display: none;
-	width: 314px;
+	width: 354px;
 }
