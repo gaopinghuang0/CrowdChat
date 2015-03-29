@@ -4,6 +4,7 @@
 	var g_num_seen = 0; 
 	var g_pending_num = 0;
 	var g_questioned_num = 0;  
+	var g_rejected_num = 0;
 	var g_worker_id;
 	var req_id;
 	var g_task_id;
@@ -44,7 +45,8 @@ jQuery(document).ready(function() {
     poll();  // Check for new messages
     pending_poll(); // Check for new pending messages
     // rating_poll();  // Check for new ratings
-    marking_poll();  // Check for new marking question or rejecting
+    marking_poll();  // Check for new marking question
+    reject_poll();   // Check for new rejecting message
 });
 
 function handle_new_message_event(evt) {
@@ -280,7 +282,7 @@ function marking_poll() {
 				});
 			});
 			
-            /* Record the number of total agreed */
+            /* Record the number of total questions */
 			g_questioned_num = data.questions.length;
 			/* Update the number of agreed pending */
 			$('.total_count').text(g_questioned_num);
@@ -302,42 +304,35 @@ function reject_poll() {
 	jQuery.ajax({
 		url: url_for("cast_reject"),
 		type: "POST",
-		data: {questioned_num: g_questioned_num},
+		data: {rejected_num: g_rejected_num},
 		success: function(data, text_status, jq_xhr) {
-			var agreed_parts = [];
-			for (var i = 0; i < data.questions.length; i++) {
-				var this_id = data.questions[i].id;
-				agreed_parts.push(this_id);
+			var parts = [];
+			for (var i = 0; i < data.rejected.length; i++) {
+				var this_id = data.rejected[i].id;
+				parts.push(this_id);
 			}
 			$("#messages_display ul").each(function(){
 				$(this).find('.message').each(function(){
 					var curr = $(this).find('span').last();
 					curr_id = parseInt(curr.attr("messid"));
-					if (agreed_parts.indexOf(curr_id) >= 0) {
-						curr.addClass('questioned');
-						if (curr.prev('.quest_mark').length == 0) {
-							curr.before("<span class='quest_mark'>&quest;</span>");
-						}
+					if (parts.indexOf(curr_id) >= 0) {
+						curr.addClass('rejected');
 					} else {
-						curr.removeClass('questioned');
-						if (curr.prev('.quest_mark').length > 0) {
-							curr.prev('.quest_mark').remove();
-						}
+						curr.removeClass('rejected');
 					}
 				});
 			});
 			
-            /* Record the number of total agreed */
-			g_questioned_num = data.questions.length;
-			/* Update the number of agreed pending */
-			$('.total_count').text(g_questioned_num);
+            /* Record the number of total rejected */
+			g_rejected_num = data.rejected.length;
+
             /* Check for new ratings (again) */
-			marking_poll();
+			reject_poll();
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(marking_poll, 1000);
+			setTimeout(reject_poll, 1000);
 		}
 	});
 }
@@ -491,7 +486,7 @@ function click_message_prompt(mode) {
  * condition and button are strings
  */
 function button_set_color(target, condition, button, flag) {
-	
+	// flag is 0 when it is blank
 	flag = typeof flag !==  'undefined' ? flag : 0;  // ^_^
 	
 	if (flag == 0) {

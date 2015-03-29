@@ -71,10 +71,18 @@ class ModifyData(InOut):
         db.insert('rating_record', task_id=self.task_id, mess_id=self.mess_id, \
                   temp_rating=self.rating, edit_time=self.edit_time)
         db.update('message', where="id=$id", vars={'id':self.mess_id}, rating=self.rating)
-        
-    # and update the questioned column in table "message"
+    
+    # insert the question mark record to question_record table    
+    # update the questioned column in table "message"
     def update_questioned(self):
+        # db.insert(), add later
         db.update('message', where="id=$id", vars={'id':self.mess_id}, questioned=self.questioned)
+    
+    # insert the reject record to a table
+    # update the rejected column in table "message"
+    def update_rejected(self):
+        # db.insert(), add later
+        db.update('message', where="id=$id", vars={'id':self.mess_id}, rejected=self.rejected)
 
 class FetchDataWithInput(InOut):
     
@@ -84,8 +92,7 @@ class FetchDataWithInput(InOut):
         records = tuple(db.select('message',
                                    where="task_id=$task_id",
                                    vars={"task_id":self.task_id}))
-        messages = self.tuple_to_list(records)
-        return messages
+        return self.tuple_to_list(records)
     
     def fetch_all_pendings(self):
         assert isinstance(self.task_id, int)
@@ -94,22 +101,25 @@ class FetchDataWithInput(InOut):
                                 pending_record.task_id = %d and message.id=pending_record.mess_id
                                 GROUP BY pending_record.mess_id;'''
                                  % (self.task_id)))
-        pendings = self.tuple_to_list(records)
-        return pendings
+        return self.tuple_to_list(records)
     
     def fetch_all_ratings(self):
         records = tuple(db.query('''SELECT id from message where rating=1 and id in
                                 (SELECT mess_id from pending_record where task_id=%d);'''
                                  % (self.task_id)))
-        ratings = self.tuple_to_list(records)
-        return ratings
+        return self.tuple_to_list(records)
     
-    # fetch all questioned ids
+    # fetch all questioned messages' ids
     def fetch_all_questions(self):
         records = tuple(db.query('''SELECT id from message where questioned=1 and task_id=%d;'''
                                  % (self.task_id)))
-        results = self.tuple_to_list(records)
-        return results
+        return self.tuple_to_list(records)
+    
+    # fetch all rejected messages' ids into a list
+    def fetch_all_rejected(self):
+        records = tuple(db.query('''SELECT id from message where rejected=1 and task_id=%d;'''
+                                 % (self.task_id)))
+        return self.tuple_to_list(records)
     
 class FetchDataWithout(object):
     

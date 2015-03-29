@@ -18,13 +18,13 @@ PORT             = 8003
 DEBUG            = False
 
 # Global data structures
+g_events =  ['messages', 'answers', 'questions', 'rejected']  # all the events that we are handling
+# thus, g_messages[0] is used to store global messages, i.e., g_events[0]
+# g_messages[1] is to store global answers, etc
+g_messages = [[] for x in g_events]  
+# similarly, g_waiters[0] is used to store set of Future objects for 'messages', corresponding to g_events[0]
+g_waiters = [set() for x in g_events]
 
-g_messages = []     # list of messages, each as plain text
-g_waiters  = set()  # set of Future objects, one for each waiting /update request
-g_pendings = []
-g_pending_waiters = set()
-g_questions  = []
-g_question_waiters = set()
 
 class MainHandler(web.RequestHandler):
     def get(self):
@@ -32,15 +32,16 @@ class MainHandler(web.RequestHandler):
         records = model.FetchDataWithout().fetch_random_task()
         # records[0] means the only one task
         messages = model.FetchDataWithInput(records[0]).fetch_all_messages()
-        atomic_id_append(messages, g_messages)
+        atomic_id_append(messages, g_messages[0])
         
         pendings = model.FetchDataWithInput(records[0]).fetch_all_pendings()
-        atomic_id_append(pendings, g_pendings)
+        atomic_id_append(pendings, g_messages[1])
         
-        # Since g_questions may decrease its length, we cannot use append. Instead,
+        # Since g_messages[2] and [3] may decrease its length, we cannot use append. Instead,
         # we have to assign a new value to it
-        global g_questions
-        g_questions = model.FetchDataWithInput(records[0]).fetch_all_questions()
+        # global g_messages
+        g_messages[2] = model.FetchDataWithInput(records[0]).fetch_all_questions() 
+        g_messages[3] = model.FetchDataWithInput(records[0]).fetch_all_rejected()
 
         # Serve index.html blank.  It will fetch new messages upon loading.
         self.render("index.html", records=records)
@@ -48,6 +49,7 @@ class MainHandler(web.RequestHandler):
 class NewHandler(web.RequestHandler):
     def post(self):
         # Get new message sent by browser and append it to the global message list
+        index = g_events.index('messages')  # Get the index in the g_events, 0
         posts = {
                  'message'     : self.get_argument("message"),
                  'worker_id'   : self.get_argument("worker_id"),
@@ -58,44 +60,47 @@ class NewHandler(web.RequestHandler):
         # fetch all messages with task_id
         messages = model.FetchDataWithInput(posts).fetch_all_messages()
         for message in messages:
-            if message not in g_messages:
-                g_messages.append(message)
+            if message not in g_messages[index]:
+                g_messages[index].append(message)
+                
         # Print a message to the log so we can see what is going on
-        print g_messages
-        logging.info("Sending new message to %r listeners", len(g_waiters))
+        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
         # Notify all waiting /update requests
-        for future in g_waiters:
+        for future in g_waiters[index]:
 
             # Set the result of the Future object yielded by the request's coroutine
-            future.set_result(g_messages)
+            future.set_result(g_messages[index])
 
         # Clear the waiters list
-        g_waiters.clear()
+        g_waiters[index].clear()
 
 class UpdateHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
+        index = g_events.index('messages')  # Get the index in the g_events, 0
         # Browser sends the number of messages it has seen so far.
         num_seen = int(self.get_argument("num_seen", 0))
         
         # If there are no new messages (other than what browser has already seen), then wait.
-        if num_seen == len(g_messages):
+        if num_seen == len(g_messages[index]):
             self._future = concurrent.Future() # Create an empty Future object
-            g_waiters.add(self._future)                # Add it to the global set of waiters
+            g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
-            self.write({"messages": g_messages})  # This sets Content-Type header automatically
+            self.write({"messages": g_messages[index]})  # This sets Content-Type header automatically
 
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
-        g_waiters.remove(self._future) # Remove this Future object from the global set of waiters
+        # Remove this Future object from the global set of waiters
+        g_waiters[g_events.index('messages')].remove(self._future)
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s)
 
 
 class AppendHandler(web.RequestHandler):
     def post(self):
         # Get new message sent by browser and append it to the global pending_message list
+        index = g_events.index('answers')  # Get the index in the g_events, 1
         pending_posts = {
                  'worker_id'   : self.get_argument("worker_id"),
                  'task_id'     : self.get_argument("task_id"),
@@ -106,45 +111,47 @@ class AppendHandler(web.RequestHandler):
         # fetch all pending messages with task_id
         pendings = model.FetchDataWithInput(pending_posts).fetch_all_pendings()
         for pending in pendings:
-            if pending not in g_pendings:
-                g_pendings.append(pending)
+            if pending not in g_messages[index]:
+                g_messages[index].append(pending)
         # Print a message to the log so we can see what is going on
-        logging.info("Sending new message to %r listeners", len(g_waiters))
+        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
     
         # Notify all waiting /update requests
-        for future in g_pending_waiters:
+        for future in g_waiters[index]:
     
             # Set the result of the Future object yielded by the request's coroutine
-            future.set_result(g_pendings)
+            future.set_result(g_messages[index])
     
         # Clear the waiters list
-        g_pending_waiters.clear()
+        g_waiters[index].clear()
 
 class PendingHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
         # Browser sends the number of messages it has seen so far.
         pending_num = int(self.get_argument("pending_number", 0))
-        
+        index = g_events.index('answers')  # Get the index in the g_events, 1
         # If there are no new messages (other than what browser has already seen), then wait.
-        if pending_num == len(g_pendings):
+        if pending_num == len(g_messages[index]):
             self._future = concurrent.Future() # Create an empty Future object
-            g_pending_waiters.add(self._future)                # Add it to the global set of waiters
+            g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
-            # print 'I am in pendinghandler, g_pendings=', g_pendings
-            self.write({"pendings": g_pendings})  # This sets Content-Type header automatically
+            # print 'I am in pendinghandler, g_messages[1]=', g_messages[1]
+            self.write({"pendings": g_messages[index]})  # This sets Content-Type header automatically
 
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
-        g_pending_waiters.remove(self._future) # Remove this Future object from the global set of waiters
+        # Remove this Future object from the global set of waiters
+        g_waiters[g_events.index('answers')].remove(self._future)
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s)
 
 
 class QuestionHandler(web.RequestHandler):
     def post(self):
         # Get new message sent by browser and append it to the global pending_message list
+        index = g_events.index('questions')  # Get the index in the g_events, 2
         mark_posts = {
                  'task_id'     : self.get_argument("task_id"),
                  'mess_id'     : self.get_argument("mess_id"),
@@ -155,36 +162,88 @@ class QuestionHandler(web.RequestHandler):
         model.ModifyData(mark_posts).update_questioned()
         
         # fetch all of the agreed messages'id with task_id to a list
-        global g_questions
-        g_questions = model.FetchDataWithInput(mark_posts).fetch_all_questions()
+        global g_messages
+        g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_questions()
 
         # Print a message to the log so we can see what is going on
-        logging.info("Sending new message to %r listeners", len(g_question_waiters))
+        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
         # Notify all waiting /update requests
-        for future in g_question_waiters:
+        for future in g_waiters[index]:
     
             # Set the result of the Future object yielded by the request's coroutine
-            future.set_result(g_questions)
+            future.set_result(g_messages[index])
     
         # Clear the waiters list
-        g_question_waiters.clear()
+        g_waiters[index].clear()
 
 class CastMarkHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
         curr_num = int(self.get_argument("questioned_num", 0))
-        if curr_num == len(g_questions):
+        index = g_events.index('questions')  # Get the index in the g_events, 2
+        
+        if curr_num == len(g_messages[index]):
             self._future = concurrent.Future() # Create an empty Future object
-            g_question_waiters.add(self._future)                # Add it to the global set of waiters
+            g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
-            self.write({"questions": g_questions})  # This sets Content-Type header automatically
+            self.write({"questions": g_messages[index]})  # This sets Content-Type header automatically
 
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
-        g_question_waiters.remove(self._future) # Remove this Future object from the global set of waiters
+        g_waiters[g_events.index('questions')].remove(self._future)
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s)    
+
+
+class RejectHandler(web.RequestHandler):
+    def post(self):
+        # Get new message sent by browser and append it to the global pending_message list
+        index = g_events.index('rejected')  # Get the index in the g_events, 3
+        mark_posts = {
+                 'task_id'     : self.get_argument("task_id"),
+                 'mess_id'     : self.get_argument("mess_id"),
+                 'rejected'    : self.get_argument("num")
+                 }
+        
+        # update the rating column in table message
+        model.ModifyData(mark_posts).update_rejected()
+        
+        # fetch all of the agreed messages'id with task_id to a list
+        global g_messages
+        g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_rejected()
+
+        # Print a message to the log so we can see what is going on
+        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
+        # Notify all waiting /update requests
+        for future in g_waiters[index]:
+    
+            # Set the result of the Future object yielded by the request's coroutine
+            future.set_result(g_messages[index])
+    
+        # Clear the waiters list
+        g_waiters[index].clear()
+
+class CastRejectHandler(web.RequestHandler):
+    @gen.coroutine
+    def post(self):
+        curr_num = int(self.get_argument("rejected_num", 0))
+        index = g_events.index('rejected')  # Get the index in the g_events, 3
+        if curr_num == len(g_messages[index]):
+            self._future = concurrent.Future() # Create an empty Future object
+            g_waiters[index].add(self._future)                # Add it to the global set of waiters
+            yield self._future                         # WAIT until future.set_result(..) is called
+
+        # If browser is still connected, then send the entire list of messages as JSON
+        if not self.request.connection.stream.closed():
+            self.write({"rejected": g_messages[index]})  # This sets Content-Type header automatically
+
+    def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
+        g_waiters[g_events.index('rejected')].remove(self._future)
+        self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s) 
+
+class CastAnswerHandler(web.RequestHandler):
+    pass
 
 def atomic_id_append(results, g_results):
     ids = []  # ids that are already in g_results
@@ -205,8 +264,9 @@ def main():
           (r"/append",      AppendHandler),
           (r"/pending",     PendingHandler),
           (r"/questioned",  QuestionHandler),
-          (r"/rejected",    RejectHandler),
           (r"/cast_mark",   CastMarkHandler),
+          (r"/rejected",    RejectHandler),
+          (r"/cast_reject", CastRejectHandler),
           (r"/cast_answer", CastAnswerHandler) ],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
         static_path   = os.path.join(os.path.dirname(__file__), "static"),
