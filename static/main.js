@@ -2,7 +2,7 @@
 (function(){
 	/* Some global variables */
 	var g_num_seen = 0; 
-	var g_pending_num = 0;
+	var g_answer_num = 0;
 	var g_questioned_num = 0;  
 	var g_rejected_num = 0;
 	var g_worker_id;
@@ -10,6 +10,7 @@
 	var g_task_id;
 	var unique_code;
 	var g_url_prefix = '';
+	var MIN_INPUT = 6;
 
 jQuery(document).ready(function() {
     $("#message_input").on("keypress", handle_new_message_event);
@@ -27,23 +28,8 @@ jQuery(document).ready(function() {
 		$("#roommode").text('(worker'+worknum+')');
 	}
 	
-	// 1. click on the message to show mark (question and cancel)
-	
-	// Opt1. automatically mark the input with ? as question
-	
-	// 2. click on the question button, change its color
-	
-	// 3. click on the answer button, it is related to this question
-	
-	// 4. after answer it, push the Q/A pair to the right
-	
-	// 5. for requester, it has some buttons to answer it and reject it
-	
-	// 6. for requester, he/she can only answer the meaningful question, and approve it automatically
-	
-	
     poll();  // Check for new messages
-    pending_poll(); // Check for new pending messages
+    answer_poll(); // Check for new answer messages
     // rating_poll();  // Check for new ratings
     marking_poll();  // Check for new marking question
     reject_poll();   // Check for new rejecting message
@@ -59,7 +45,7 @@ function handle_new_message_event(evt) {
         message_input.disabled = true;   // Disable text box
 
         // Send new message to the server using AJAX
-        if ($("#message_input").val().length > 0) {
+        if ($("#message_input").val().length > MIN_INPUT) {
             jQuery.ajax({
                 url: "/new",
                 data: { message   : message_input.value,
@@ -77,7 +63,9 @@ function handle_new_message_event(evt) {
             });
         }
         else {
-        	// empty enter
+        	open_error_dialog();
+        	message_input.disabled = false;
+        	return false;
         }
     }
 }
@@ -92,7 +80,7 @@ function poll() {
 			var html_parts = [];
 			for(var i = 0; i < data.messages.length; i++) {
                 var message = data.messages[i];
-				var html = message.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+				var html = safe_text(message.text);
 				var each_worker_id = message.worker_id;
 				var each_time = message.edit_time;
 				var each_id = message.id;
@@ -126,8 +114,6 @@ function poll() {
 				click_message_prompt('.pop1');
 			}
 			
-			
-			push_to_pending_handler();
             // Record the number of messages
 			g_num_seen = data.messages.length;
 			
@@ -142,54 +128,41 @@ function poll() {
 	});
 }
 
-function pending_poll() {
+function answer_poll() {
 	jQuery.ajax({
-		url: "/pending",
+		url: url_for("/cast_answer"),
 		type: "POST",
-		data: {pending_number: g_pending_num},
+		data: {answer_number: g_answer_num},
 		success: function(data, text_status, jq_xhr) {
-			// for Pending
-			if (g_worker_id == req_id) {  // requester mode
-				var pending_parts = [];
-				for(var i = 0; i < data.pendings.length; i++) {
-	                var text2 = data.pendings[i];
-					var html2 = text2.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-					var pmess_id = 'pmessid' + text2.id; /* pending message id */
-
-	                html2 = '<li class="pending" id="'+ pmess_id +'">' + html2 + 
-	                		"<span class='prompt_content'><span class='prompt'>(Click to agree/disagree)" +
-	                		"</span></span></li>";
-	                pending_parts.push(html2);
+			// for Q/A pairs
+			if (1) {  // so far, requester mode and worker_mode are the same
+				var answer_parts = [];
+				for(var i = 0; i < data.answers.length; i++) {
+	                var record = data.answers[i];
+					var quest = safe_text(record.quest);
+					var ans = safe_text(record.answer);
+					var qa_id = 'questid=' + record.quest_id + " ansid="+record.ans_id;
+					
+	                html = '<li class="qa_pair quest" '+ qa_id +'"><span>Q: </span>' + quest + "</li>" +
+	                		'<li class="qa_pair ans" ' + qa_id + '"><span>A: </span>' + ans + "</li>";
+	                answer_parts.push(html);
 				}
-				$("#candidates_container ul").html(pending_parts.join(""));
+				$("#candidates_container ul").html(answer_parts.join(""));
 			}
-			else {  // worker mode
-				var pending_parts = [];
-				for(var i = 0; i < data.pendings.length; i++) {
-	                var text2 = data.pendings[i];
-					var html2 = text2.text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-					var pmess_id = 'pmessid' + text2.id; /* pending message id */
-
-	                html2 = '<li class="pending" style="cursor:auto;" id="'+ pmess_id +'">' + html2 
-	                		+'</li>';
-	                pending_parts.push(html2);
-				}
-				$("#candidates_container ul").html(pending_parts.join(""));
-			}
+			
 			scroll_to_view('right');
 			
-			
             /* Record the number of messages */
-			g_pending_num = data.pendings.length;
-			/* Update the number of total pending */
-			$('.total_count').text(g_pending_num);			
+			g_answer_num = data.answers.length;
+			/* Update the number of total answer */
+			$('.answered_count').text(g_answer_num);			
             // Check for new messages (again)
-			pending_poll();
+			answer_poll();
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(pending_poll, 1000);
+			setTimeout(answer_poll, 1000);
 		}
 	});
 }
@@ -197,7 +170,7 @@ function pending_poll() {
 
 function rating_poll() {
 	jQuery.ajax({
-		url: "/cast_rate",
+		url: url_for("/cast_rate"),
 		type: "POST",
 		data: {agreed_num: g_agreed_num},
 		success: function(data, text_status, jq_xhr) {
@@ -220,7 +193,7 @@ function rating_poll() {
             /* Record the number of total agreed */
 			g_agreed_num = data.ratings.length;
 			/* Update the number of agreed pending */
-			$('.agreed_count').text(g_agreed_num);
+			$('.answered_count').text(g_agreed_num);
             /* Check for new ratings (again) */
 			rating_poll();
 		},
@@ -246,6 +219,7 @@ function popup_mess_handler(obj, condition) {
 			mess_id    : mess_id,
 			task_id    : g_task_id,
 			num        : num,
+			text       : $('#message_input').val(),
 		}
 	});
 }
@@ -338,29 +312,6 @@ function reject_poll() {
 }
 
 
-/*
- * Click on the message (<span>), get the message_id and
- * send to the server
- */
-function push_to_pending_handler() {
-	
-	/* need to modify */
-	
-//	$("#messages_display ul li span").click(function(){
-//		var pending_message = $(this).html();
-//		var this_id = parseInt($(this).attr("messid"));
-//		$.ajax({
-//			url:"/append",
-//			data:{
-//				worker_id       : g_worker_id,
-//				mess_id         : this_id,
-//				task_id         : g_task_id,
-//				},
-//			type: "POST"
-//		});
-//	});
-}
-
 
 /* 
  * Click message to show prompt 
@@ -399,20 +350,50 @@ function click_message_prompt(mode) {
 		return false;
 	});
 
+	/* mark message as question */
 	$('.mark_question').on('click',function(){
-		/* mark message as question */
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		popup_mess_handler(obj, 'questioned');
 		button_set_color(obj, 'questioned', '.mark_question', 1);
 	});
 	
+	/* mark message as rejected */
 	$(".reject_mess").on('click', function(){
-		// mark message as rejected
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		popup_mess_handler(obj, 'rejected');
 		button_set_color(obj, 'rejected', '.reject_mess', 1);
+	});
+	
+	/* answer question, after that, push question and answer to right panel */
+	$('.answer_ques').on('click', function(){
+		// use list index "now" to find the span that is selected
+		var obj = find_span_by_index(now);
+		
+		// 1. display the question in the input area
+		// and add the mess_id as one attribute of input
+		var text = "Answer Here: " + obj.text();
+		if (text.length > 40) {  // trancate too long text
+			text = text.slice(0, 40) + '...';
+		}
+		var input = $("#message_input");
+		input.attr("placeholder", text);
+		input.addClass("answering");
+		input.select();
+		
+		button_set_color(obj, 'answered', '.answer_ques', 1);
+		
+		// 2. detect submit event
+		input.on("keypress", function(evt){
+			if (evt.which == 13) {
+				evt.preventDefault();
+				if (input.val().length > MIN_INPUT && input.hasClass('answering')) {
+					// 3. check whether have in the input 
+					popup_mess_handler(obj, 'answered');
+				}
+			}
+		});
 	});
 	
 	function deselected(e) {
@@ -452,14 +433,7 @@ function click_message_prompt(mode) {
 		button_set_color(target, 'questioned', '.mark_question');
 		button_set_color(target, 'rejected', '.reject_mess');
 		button_set_color(target, 'answered', '.answer_ques');
-		
-		if (target.hasClass('questioned')) {
-			$('.mark_question').css("background","#dcdcdc");
-		} else {
-			$('.mark_question').css("background","#fff");
-		}
-		
-		
+			
 		parent.on('scroll', function(e){
 			var curr = target[0].getBoundingClientRect();
 			if (chat.top <= curr.top && curr.top <= chat.bottom) {
@@ -481,7 +455,7 @@ function click_message_prompt(mode) {
 }
 
 /* 
- * Change the color of some button
+ * Change the color of button
  * target is jquery obj
  * condition and button are strings
  */
@@ -598,5 +572,29 @@ function url_for(url) {
 	return url.indexOf('/') == 0 ? (g_url_prefix + url) : (g_url_prefix + '/' + url);
 }
 
+function safe_text(text) {
+	return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+}
+
+/*******************************************************************************
+ * Common dialog to prompt error
+ */
+function open_error_dialog() {
+	$("#dialog_confirm").html('Your input is too short.');
+
+	// Define the Dialog and its properties.
+	$("#dialog_confirm").dialog({
+		resizable : false,
+		modal : true,
+		title : "Tips",
+		height : 200,
+		width : 400,
+		buttons : {
+			"OK" : function() {
+				$(this).dialog('close');
+			}
+		}
+	});
+}
 
 })(jQuery);

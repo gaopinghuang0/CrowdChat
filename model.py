@@ -59,11 +59,24 @@ class ModifyData(InOut):
             db.insert('message', text=self.message, worker_id=self.worker_id, \
                         task_id=self.task_id, edit_time=self.edit_time)
 
-    # insert new pending message
-    def insert_pending_message(self):
+    # insert new question and answer pair
+    def insert_answer_message(self):
         if isinstance(self.task_id, int):
-            db.insert('pending_record', worker_id=self.worker_id, mess_id=self.mess_id, \
+            # find the mess id of answer
+            ans_id = 0
+            # since the new message is inserted by other function
+            # we need a loop to wait until the message is actually inserted
+            while ans_id == 0 :
+                records = tuple(db.select("message", 
+                                          where="text=$text and task_id=$task_id",
+                                          vars={'text':self.text, 'task_id':self.task_id}))
+                if len(records) > 0:
+                    ans_id = records[0].id
+            # insert the ids of answer and question pairs
+            db.insert('answer_record', ans_id=ans_id, quest_id=self.mess_id, \
                       task_id=self.task_id, edit_time=self.edit_time)
+            # update the 'answered' column of question id
+            db.update('message', where="id=$id", vars={'id':self.mess_id}, answered=self.answered)
             
     # insert into table rating_record
     # and update the rating column in table message          
@@ -94,12 +107,13 @@ class FetchDataWithInput(InOut):
                                    vars={"task_id":self.task_id}))
         return self.tuple_to_list(records)
     
-    def fetch_all_pendings(self):
+    def fetch_all_qa(self):
         assert isinstance(self.task_id, int)
-        records = tuple(db.query('''SELECT message.text AS text, pending_record.mess_id AS id 
-                                from message, pending_record where
-                                pending_record.task_id = %d and message.id=pending_record.mess_id
-                                GROUP BY pending_record.mess_id;'''
+        # select Q/A id pairs     ^_^
+        records = tuple(db.query('''SELECT ans_rec.quest_id as quest_id, q.text as quest,
+                                ans_rec.ans_id as ans_id, a.text as answer 
+                                from answer_record as ans_rec, message as q, message as a
+                                where ans_rec.quest_id=q.id and ans_rec.ans_id=a.id and ans_rec.task_id=%d;'''
                                  % (self.task_id)))
         return self.tuple_to_list(records)
     

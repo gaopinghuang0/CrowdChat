@@ -6,10 +6,12 @@
 	<title>Find your true need</title>
 	
 	<link rel="icon" type="image/x-icon"  href="https://rawgit.com/gaopinghuang0/warmup6/master/static/favicon.ico" />
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/themes/smoothness/jquery-ui.css" />
 	<link rel="stylesheet" type="text/css" href="{{ static_url("perfect-scrollbar.css") }}">
 	<link rel="stylesheet" type="text/css" href="{{ static_url("main.css") }}">
 	
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
 	<script src="{{ static_url("perfect-scrollbar.js") }}"></script>
 	<script src="{{ static_url("main.js") }}"></script>
 </head>
@@ -35,11 +37,11 @@
 		<!-- Container for messages -->
 		<div id="messages_display"><ul></ul></div>
 		<!-- Text input for new messages -->
-		<input id="message_input" type="text">
+		<textarea id="message_input" rows=1></textarea>
 	</div>
 	
 	<div class="right">
-		<div class="dialog_header"><h2>Q/A (answered: <span class="agreed_count">0</span>
+		<div class="dialog_header"><h2>Q/A (answered: <span class="answered_count">0</span>
 		 / <span class="total_count">0</span>)</h2></div>
 		<!-- Container for candidate message to be rated by requester -->
 		<div id="candidates_container">
@@ -65,6 +67,7 @@
 		<a class="reject_mess" href="#">Reject</a>
 		<a class="cancel_pop close" href="#">Cancel</a>
 	</div>
+	<div id="dialog_confirm"></div>
 </body>
 </html>
 <!-- vim: set fileencoding=utf-8 tabstop=2 shiftwidth=2 expandtab: -->

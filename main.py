@@ -32,24 +32,24 @@ class MainHandler(web.RequestHandler):
         records = model.FetchDataWithout().fetch_random_task()
         # records[0] means the only one task
         messages = model.FetchDataWithInput(records[0]).fetch_all_messages()
-        atomic_id_append(messages, g_messages[0])
+        atomic_id_append(messages, 'id', g_messages[g_events.index('messages')])
         
-        pendings = model.FetchDataWithInput(records[0]).fetch_all_pendings()
-        atomic_id_append(pendings, g_messages[1])
+        answers = model.FetchDataWithInput(records[0]).fetch_all_qa()
+        atomic_id_append(answers, 'quest_id', g_messages[g_events.index('answers')])
         
         # Since g_messages[2] and [3] may decrease its length, we cannot use append. Instead,
         # we have to assign a new value to it
         # global g_messages
-        g_messages[2] = model.FetchDataWithInput(records[0]).fetch_all_questions() 
-        g_messages[3] = model.FetchDataWithInput(records[0]).fetch_all_rejected()
+        g_messages[g_events.index('questions')] = model.FetchDataWithInput(records[0]).fetch_all_questions() 
+        g_messages[g_events.index('rejected')] = model.FetchDataWithInput(records[0]).fetch_all_rejected()
 
         # Serve index.html blank.  It will fetch new messages upon loading.
         self.render("index.html", records=records)
 
 class NewHandler(web.RequestHandler):
     def post(self):
-        # Get new message sent by browser and append it to the global message list
         index = g_events.index('messages')  # Get the index in the g_events, 0
+        # Get new message sent by browser and append it to the global message list
         posts = {
                  'message'     : self.get_argument("message"),
                  'worker_id'   : self.get_argument("worker_id"),
@@ -59,9 +59,7 @@ class NewHandler(web.RequestHandler):
         model.ModifyData(posts).insert_message()
         # fetch all messages with task_id
         messages = model.FetchDataWithInput(posts).fetch_all_messages()
-        for message in messages:
-            if message not in g_messages[index]:
-                g_messages[index].append(message)
+        atomic_id_append(messages, 'id', g_messages[index])
                 
         # Print a message to the log so we can see what is going on
         logging.info("Sending new message to %r listeners", len(g_waiters[index]))
@@ -97,24 +95,21 @@ class UpdateHandler(web.RequestHandler):
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s)
 
 
-class AppendHandler(web.RequestHandler):
+class AnswerHandler(web.RequestHandler):
     def post(self):
-        # Get new message sent by browser and append it to the global pending_message list
         index = g_events.index('answers')  # Get the index in the g_events, 1
-        pending_posts = {
-                 'worker_id'   : self.get_argument("worker_id"),
+        # Get new message sent by browser and append it to the global answer_message list
+        answer_posts = {
                  'task_id'     : self.get_argument("task_id"),
-                 'mess_id'     : self.get_argument("mess_id")
+                 'mess_id'     : self.get_argument("mess_id"),
+                 'answered'    : self.get_argument("num"),
+                 'text'        : self.get_argument("text"),
                  }
-        # insert into table  pending_record
-        model.ModifyData(pending_posts).insert_pending_message()
-        # fetch all pending messages with task_id
-        pendings = model.FetchDataWithInput(pending_posts).fetch_all_pendings()
-        for pending in pendings:
-            if pending not in g_messages[index]:
-                g_messages[index].append(pending)
-        # Print a message to the log so we can see what is going on
-        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
+        # insert into table  answer_record
+        model.ModifyData(answer_posts).insert_answer_message()
+        # fetch all question/answer pairs with task_id
+        answers = model.FetchDataWithInput(answer_posts).fetch_all_qa()
+        atomic_id_append(answers, 'quest_id', g_messages[index])
     
         # Notify all waiting /update requests
         for future in g_waiters[index]:
@@ -125,22 +120,22 @@ class AppendHandler(web.RequestHandler):
         # Clear the waiters list
         g_waiters[index].clear()
 
-class PendingHandler(web.RequestHandler):
+class CastAnswerHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
-        # Browser sends the number of messages it has seen so far.
-        pending_num = int(self.get_argument("pending_number", 0))
         index = g_events.index('answers')  # Get the index in the g_events, 1
+        # Browser sends the number of messages it has seen so far.
+        answer_num = int(self.get_argument("answer_number", 0))
         # If there are no new messages (other than what browser has already seen), then wait.
-        if pending_num == len(g_messages[index]):
+        if answer_num == len(g_messages[index]):
             self._future = concurrent.Future() # Create an empty Future object
             g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
-            # print 'I am in pendinghandler, g_messages[1]=', g_messages[1]
-            self.write({"pendings": g_messages[index]})  # This sets Content-Type header automatically
+            # print 'I am in answerhandler, g_messages[1]=', g_messages[1]
+            self.write({"answers": g_messages[index]})  # This sets Content-Type header automatically
 
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
         # Remove this Future object from the global set of waiters
@@ -150,8 +145,8 @@ class PendingHandler(web.RequestHandler):
 
 class QuestionHandler(web.RequestHandler):
     def post(self):
-        # Get new message sent by browser and append it to the global pending_message list
         index = g_events.index('questions')  # Get the index in the g_events, 2
+        # Get new message sent by browser
         mark_posts = {
                  'task_id'     : self.get_argument("task_id"),
                  'mess_id'     : self.get_argument("mess_id"),
@@ -164,9 +159,7 @@ class QuestionHandler(web.RequestHandler):
         # fetch all of the agreed messages'id with task_id to a list
         global g_messages
         g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_questions()
-
-        # Print a message to the log so we can see what is going on
-        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
+        
         # Notify all waiting /update requests
         for future in g_waiters[index]:
     
@@ -213,8 +206,6 @@ class RejectHandler(web.RequestHandler):
         global g_messages
         g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_rejected()
 
-        # Print a message to the log so we can see what is going on
-        logging.info("Sending new message to %r listeners", len(g_waiters[index]))
         # Notify all waiting /update requests
         for future in g_waiters[index]:
     
@@ -242,16 +233,13 @@ class CastRejectHandler(web.RequestHandler):
         g_waiters[g_events.index('rejected')].remove(self._future)
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s) 
 
-class CastAnswerHandler(web.RequestHandler):
-    pass
-
-def atomic_id_append(results, g_results):
+def atomic_id_append(results, key, g_results):
     ids = []  # ids that are already in g_results
     for g_result in g_results:
-        ids.append(g_result['id'])
+        ids.append(g_result[key])
     # print ids
     for result in results:
-        if result['id'] not in ids:
+        if result[key] not in ids:
             g_results.append(result)
 
 
@@ -261,13 +249,12 @@ def main():
         [ (r"/",            MainHandler),
           (r"/new",         NewHandler),
           (r"/update",      UpdateHandler),
-          (r"/append",      AppendHandler),
-          (r"/pending",     PendingHandler),
+          (r"/answered",    AnswerHandler),
+          (r"/cast_answer", CastAnswerHandler),
           (r"/questioned",  QuestionHandler),
           (r"/cast_mark",   CastMarkHandler),
           (r"/rejected",    RejectHandler),
-          (r"/cast_reject", CastRejectHandler),
-          (r"/cast_answer", CastAnswerHandler) ],
+          (r"/cast_reject", CastRejectHandler)],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
         static_path   = os.path.join(os.path.dirname(__file__), "static"),
         debug         = DEBUG,
