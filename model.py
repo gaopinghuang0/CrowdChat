@@ -12,6 +12,7 @@ from datetime import datetime
 import random, string, json
 from hashids import Hashids
 import web
+import time
 # from _sqlite3 import InterfaceError
 # from itertools import groupby
 # from fuzzywuzzy import fuzz
@@ -67,6 +68,7 @@ class ModifyData(InOut):
             # since the new message is inserted by other function
             # we need a loop to wait until the message is actually inserted
             while ans_id == 0 :
+                #time.sleep(0.1)
                 records = tuple(db.select("message", 
                                           where="text=$text and task_id=$task_id",
                                           vars={'text':self.text, 'task_id':self.task_id}))

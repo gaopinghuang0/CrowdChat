@@ -110,7 +110,8 @@ class AnswerHandler(web.RequestHandler):
         # fetch all question/answer pairs with task_id
         answers = model.FetchDataWithInput(answer_posts).fetch_all_qa()
         atomic_id_append(answers, 'quest_id', g_messages[index])
-    
+        
+        print g_messages[index]
         # Notify all waiting /update requests
         for future in g_waiters[index]:
     

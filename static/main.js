@@ -10,7 +10,7 @@
 	var g_task_id;
 	var unique_code;
 	var g_url_prefix = '';
-	var MIN_INPUT = 6;
+	var MIN_INPUT = 5;
 
 jQuery(document).ready(function() {
     $("#message_input").on("keypress", handle_new_message_event);
@@ -47,7 +47,7 @@ function handle_new_message_event(evt) {
         // Send new message to the server using AJAX
         if ($("#message_input").val().length > MIN_INPUT) {
             jQuery.ajax({
-                url: "/new",
+                url: url_for("/new"),
                 data: { message   : message_input.value,
                 		worker_id : g_worker_id,
                 		task_id   : g_task_id },
@@ -72,12 +72,13 @@ function handle_new_message_event(evt) {
 
 function poll() {
 	jQuery.ajax({
-		url: "/update",
+		url: url_for("/update"),
 		type: "POST",
 		data: {num_seen: g_num_seen},
 		success: function(data, text_status, jq_xhr) {
             // Display the messages in the DIV with id="messages_display"
-			var html_parts = [];
+			var new_parts = [];
+			var prev_parts = $("#messages_display ul").html();  // string
 			for(var i = 0; i < data.messages.length; i++) {
                 var message = data.messages[i];
 				var html = safe_text(message.text);
@@ -100,9 +101,11 @@ function poll() {
 							'<span messid="'+each_id+'">' + html + '</span></li>';
 					}
 				}
-				html_parts.push(html);
+				if (messid_in_prev(each_id, prev_parts) == false) {
+					new_parts.push(html);
+				}
 			}
-			$("#messages_display ul").html(html_parts.join(""));
+			$("#messages_display ul").html(prev_parts + new_parts.join(""));
 			scroll_to_view('left');
 			
 			// click message to show prompt 
@@ -126,6 +129,13 @@ function poll() {
 			setTimeout(poll, 1000);
 		}
 	});
+	
+	/* judge whether this messid is in prev string */
+	function messid_in_prev(id, prev){
+		var span = '<span messid="'+id+'"';  // pattern
+		//console.log(prev.indexOf(span) > -1);
+		return prev.indexOf(span) > -1 ? true : false;
+	}
 }
 
 function answer_poll() {
@@ -148,6 +158,8 @@ function answer_poll() {
 	                answer_parts.push(html);
 				}
 				$("#candidates_container ul").html(answer_parts.join(""));
+				$("#message_input").removeClass('answering');
+				$("#message_input").attr("placeholder","");
 			}
 			
 			scroll_to_view('right');
@@ -167,43 +179,43 @@ function answer_poll() {
 	});
 }
 
-
-function rating_poll() {
-	jQuery.ajax({
-		url: url_for("/cast_rate"),
-		type: "POST",
-		data: {agreed_num: g_agreed_num},
-		success: function(data, text_status, jq_xhr) {
-			var agreed_parts = [];
-			for (var i = 0; i < data.ratings.length; i++) {
-				var this_id = 'pmessid' + data.ratings[i].id;
-				agreed_parts.push(this_id);
-			}
-			$("#candidates_container ul").each(function(){
-				$(this).find('.pending').each(function(){
-					var curr = $(this);
-					curr_id = curr.attr("id");
-					if (agreed_parts.indexOf(curr_id) >= 0) {
-						curr.addClass('agreed');
-					} else {
-						curr.removeClass('agreed');
-					}
-				});
-			});
-            /* Record the number of total agreed */
-			g_agreed_num = data.ratings.length;
-			/* Update the number of agreed pending */
-			$('.answered_count').text(g_agreed_num);
-            /* Check for new ratings (again) */
-			rating_poll();
-		},
-		error: function(jq_xhr, text_status, error_thrown) {
-            /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
-			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(rating_poll, 1000);
-		}
-	});
-}
+//
+//function rating_poll() {
+//	jQuery.ajax({
+//		url: url_for("/cast_rate"),
+//		type: "POST",
+//		data: {agreed_num: g_agreed_num},
+//		success: function(data, text_status, jq_xhr) {
+//			var agreed_parts = [];
+//			for (var i = 0; i < data.ratings.length; i++) {
+//				var this_id = 'pmessid' + data.ratings[i].id;
+//				agreed_parts.push(this_id);
+//			}
+//			$("#candidates_container ul").each(function(){
+//				$(this).find('.pending').each(function(){
+//					var curr = $(this);
+//					curr_id = curr.attr("id");
+//					if (agreed_parts.indexOf(curr_id) >= 0) {
+//						curr.addClass('agreed');
+//					} else {
+//						curr.removeClass('agreed');
+//					}
+//				});
+//			});
+//            /* Record the number of total agreed */
+//			g_agreed_num = data.ratings.length;
+//			/* Update the number of agreed pending */
+//			$('.answered_count').text(g_agreed_num);
+//            /* Check for new ratings (again) */
+//			rating_poll();
+//		},
+//		error: function(jq_xhr, text_status, error_thrown) {
+//            /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
+//			console.log("ERROR FETCHING UPDATE:", error_thrown);
+//			setTimeout(rating_poll, 1000);
+//		}
+//	});
+//}
 
 /*
  * Handler for popup mode
@@ -338,7 +350,7 @@ function click_message_prompt(mode) {
 		}
 		else {
 			find_span_by_index(prev).removeClass('selected');
-
+			
 			$(mode).css('display', 'block');
 			prev = now;
 		}
@@ -347,6 +359,8 @@ function click_message_prompt(mode) {
 	
 	$('.close').on('click', function(){
 		deselected($("messagepop"));
+		$("#message_input").removeClass('answering');
+		$("#message_input").attr("placeholder","");
 		return false;
 	});
 
@@ -354,8 +368,10 @@ function click_message_prompt(mode) {
 	$('.mark_question').on('click',function(){
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
-		popup_mess_handler(obj, 'questioned');
-		button_set_color(obj, 'questioned', '.mark_question', 1);
+		if (!obj.hasClass('rejected')) {  // if not rejected
+			popup_mess_handler(obj, 'questioned');
+			button_set_color(obj, 'questioned', '.mark_question', 1);
+		}
 	});
 	
 	/* mark message as rejected */
@@ -370,30 +386,35 @@ function click_message_prompt(mode) {
 	$('.answer_ques').on('click', function(){
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
-		
-		// 1. display the question in the input area
-		// and add the mess_id as one attribute of input
-		var text = "Answer Here: " + obj.text();
-		if (text.length > 40) {  // trancate too long text
-			text = text.slice(0, 40) + '...';
-		}
-		var input = $("#message_input");
-		input.attr("placeholder", text);
-		input.addClass("answering");
-		input.select();
-		
-		button_set_color(obj, 'answered', '.answer_ques', 1);
-		
-		// 2. detect submit event
-		input.on("keypress", function(evt){
-			if (evt.which == 13) {
-				evt.preventDefault();
-				if (input.val().length > MIN_INPUT && input.hasClass('answering')) {
-					// 3. check whether have in the input 
-					popup_mess_handler(obj, 'answered');
-				}
+		if (!obj.hasClass('rejected')) {  // if not rejected
+			/* 0. if click "answer", mark it as a question too */
+			popup_mess_handler(obj, 'questioned');
+			button_set_color(obj, 'questioned', '.mark_question', 1); 
+			
+			// 1. use the question as the placeholder in the textarea
+			// and add class "answering"
+			var text = "Answer Here: " + obj.text();
+			if (text.length > 40) {  // trancate too long text
+				text = text.slice(0, 40) + '...';
 			}
-		});
+			var input = $("#message_input");
+			input.attr("placeholder", text);
+			input.addClass("answering");
+			input.select();
+			
+			button_set_color(obj, 'answered', '.answer_ques', 1);
+			
+			// 2. detect submit event
+			input.on("keypress", function(evt){
+				if (evt.which == 13) {
+					evt.preventDefault();
+					if (input.val().length > MIN_INPUT && input.hasClass('answering')) {
+						// 3. check whether have in the input 
+						popup_mess_handler(obj, 'answered');
+					}
+				}
+			});	
+		}
 	});
 	
 	function deselected(e) {
@@ -418,11 +439,14 @@ function click_message_prompt(mode) {
 		var popup = $(mode).width();  
 		var left = pos.left;
 		
+		// other scroll handlers are cleared
 		parent.unbind("scroll"); // quite nice ^_^
 		
-		if (pos.left + popup >= chat.right) {
+		// prevent popup from going out of left/right
+		if (pos.left + popup >= chat.right) { 
 			left = pos.right - popup;
 		}
+		// set css, absolute position
 		$(mode).css({
 			position : 'absolute',
 			top: pos.top - pos.height,
@@ -433,7 +457,9 @@ function click_message_prompt(mode) {
 		button_set_color(target, 'questioned', '.mark_question');
 		button_set_color(target, 'rejected', '.reject_mess');
 		button_set_color(target, 'answered', '.answer_ques');
-			
+		
+		// if the chatroom is scrolling, keep the popup moving with message
+		// if the message is out of view, clear the popup
 		parent.on('scroll', function(e){
 			var curr = target[0].getBoundingClientRect();
 			if (chat.top <= curr.top && curr.top <= chat.bottom) {
@@ -463,14 +489,14 @@ function button_set_color(target, condition, button, flag) {
 	// flag is 0 when it is blank
 	flag = typeof flag !==  'undefined' ? flag : 0;  // ^_^
 	
-	if (flag == 0) {
+	if (flag == 0) {  // set background color if has class
 		if (target.hasClass(condition)) {
 			$(button).css("background-color","#dcdcdc");
 		} else {
 			$(button).css("background-color","#fff");
 		}
 	}
-	else if (flag == 1) {  // in operate way
+	else if (flag == 1) {  // in opposite way, set if not has class
 		if (target.hasClass(condition)) {
 			$(button).css("background-color","#fff");
 		} else {
@@ -509,6 +535,7 @@ function scroll_to_view(flag) {
 		var left_last = $("#messages_display ul li:last");
 		$("#messages_display").scrollTo(left_last);
 	}
+	/* Scroll to the bottom list item once there is a new Q/A pair */
 	if ($("#candidates_container ul li").length > 0 && flag == 'right') {
 		var right_last = $("#candidates_container ul li:last");
 		$("#candidates_container").scrollTo(right_last);
@@ -519,23 +546,23 @@ function scroll_to_view(flag) {
 /*
  * requester rate_pending_handler
  */ 
-function rate_pending_handler() {
-	if (g_worker_id == req_id) {  /* only requester can rate */
-		$(".pending").on('click', function(){
-			var mess_id = $(this).attr('id').slice(7);
-			var rating = ($(this).hasClass('agreed')) ? 0 : 1;
-			$.ajax({
-				url:"/rate",
-				type: "POST",
-				data: {
-					mess_id    : mess_id,
-					task_id    : g_task_id,
-					rating     : rating,
-				}
-			});
-		});
-	}
-}
+//function rate_pending_handler() {
+//	if (g_worker_id == req_id) {  /* only requester can rate */
+//		$(".pending").on('click', function(){
+//			var mess_id = $(this).attr('id').slice(7);
+//			var rating = ($(this).hasClass('agreed')) ? 0 : 1;
+//			$.ajax({
+//				url:"/rate",
+//				type: "POST",
+//				data: {
+//					mess_id    : mess_id,
+//					task_id    : g_task_id,
+//					rating     : rating,
+//				}
+//			});
+//		});
+//	}
+//}
 
 /**
  * Module to get all useful ids
