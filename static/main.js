@@ -11,6 +11,8 @@
 	var unique_code;
 	var g_url_prefix = '';
 	var MIN_INPUT = 5;
+//	var c_worker;  // worker object
+	
 
 jQuery(document).ready(function() {
     $("#message_input").on("keypress", handle_new_message_event);
@@ -28,12 +30,30 @@ jQuery(document).ready(function() {
 		$("#roommode").text('(worker'+worknum+')');
 	}
 	
+//	c_worker = initial_fetch_worker(g_worker_id);
+//	
+//	display_worker_info();
+	
+	
     poll();  // Check for new messages
     answer_poll(); // Check for new answer messages
     // rating_poll();  // Check for new ratings
     marking_poll();  // Check for new marking question
     reject_poll();   // Check for new rejecting message
 });
+//
+//
+//function initial_fetch_worker(worker_id) {
+//	var data = initital_ajax(worker_id);  // json, return from server
+//	var c_worker = new worker(worker_id);
+//	c_worker.set_status(data.status);
+//	c_worker.reward.set_point(data.point);
+//	
+//	
+//	
+//	return c_worker;
+//}
+
 
 function handle_new_message_event(evt) {
     if(evt.which == 13) {  // only respond to enter key
