@@ -82,10 +82,16 @@ class ModifyData(InOut):
             
     # insert into table rating_record
     # and update the rating column in table message          
-    def update_ratings(self):
-        db.insert('rating_record', task_id=self.task_id, mess_id=self.mess_id, \
-                  temp_rating=self.rating, edit_time=self.edit_time)
-        db.update('message', where="id=$id", vars={'id':self.mess_id}, rating=self.rating)
+    def update_reward(self):
+        db.insert('reward_record', task_id=self.task_id, mess_id=self.mess_id, \
+                  temp_reward=self.reward_point, edit_time=self.edit_time)
+        # fetch old points based on the mess_id
+        # add old points and new point
+        records = tuple(db.query('''SELECT worker.reward as reward, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
+                    message.id=%d'''%(self.mess_id)))[0]
+        old_reward, worker_id = records.reward, records.worker_id
+        db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, reward=old_reward+self.reward_point)
+        return worker_id  # return worker.id, not worker.worker_id
     
     # insert the question mark record to question_record table    
     # update the questioned column in table "message"
@@ -136,6 +142,10 @@ class FetchDataWithInput(InOut):
         records = tuple(db.query('''SELECT id from message where rejected=1 and task_id=%d;'''
                                  % (self.task_id)))
         return self.tuple_to_list(records)
+    
+    # fetch all_worker_reward based on worker_id
+    def fetch_worker_reward(self):
+        pass
     
 class FetchDataWithout(object):
     

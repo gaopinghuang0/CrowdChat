@@ -40,6 +40,7 @@ jQuery(document).ready(function() {
     // rating_poll();  // Check for new ratings
     marking_poll();  // Check for new marking question
     reject_poll();   // Check for new rejecting message
+    reward_poll();   // check for new reward
 });
 //
 //
@@ -405,6 +406,11 @@ function click_message_prompt(mode) {
 		$(".reward_options").css("display","block");
 		stick_pop('.reward_options', $(this), $('#messages_display'));
 		// reward handler
+		$().on('click',function(){
+			var button_id = $(this).attr('id');
+			var messid = xxx;
+			update_reward(messid, parseInt(button_id.substr(5)));
+		}
 	});
 	
 	
@@ -665,5 +671,30 @@ function open_error_dialog() {
 		}
 	});
 }
+
+//update current reward point
+function update_reward(messid, point) {
+                jQuery.ajax({
+                        url: url_for("/new_reward"),
+                        data: { mess_id: messid,
+                        	    reward_point : point,
+                        		task_id: g_task_id
+                                },
+                        type: "POST",
+                        success: function(data, text_status, jq_xhr) {
+                                $("reward_point").val(data.reward_point); //update the banner               
+                        },
+                        error: function(jq_xhr, text_status, error_thrown) {
+                                console.log("ERROR SENDING REWARD POINTS:", error_thrown);
+                        }
+                });
+}
+
+function reward_poll(){
+	// 
+	// if (data.results.worker_id == g_worker_id) { // it's me
+	// }
+}
+
 
 })(jQuery);
