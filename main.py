@@ -25,23 +25,25 @@ g_messages = [[] for x in g_events]
 # similarly, g_waiters[0] is used to store set of Future objects for 'messages', corresponding to g_events[0]
 g_waiters = [set() for x in g_events]
 
+# g_waitroom = {'waiting_list':[], 'chat_id1':[]}
 
 class MainHandler(web.RequestHandler):
     def get(self):
         # fetch random task
         records = model.FetchDataWithout().fetch_random_task()
+        fetches = model.FetchDataWithInput(records[0])
         # records[0] means the only one task
-        messages = model.FetchDataWithInput(records[0]).fetch_all_messages()
+        messages = fetches.fetch_all_messages()
         atomic_id_append(messages, 'id', g_messages[g_events.index('messages')])
         
-        answers = model.FetchDataWithInput(records[0]).fetch_all_qa()
+        answers = fetches.fetch_all_qa()
         atomic_id_append(answers, 'quest_id', g_messages[g_events.index('answers')])
         
         # Since g_messages[2] and [3] may decrease its length, we cannot use append. Instead,
         # we have to assign a new value to it
         # global g_messages
-        g_messages[g_events.index('questions')] = model.FetchDataWithInput(records[0]).fetch_all_questions() 
-        g_messages[g_events.index('rejected')] = model.FetchDataWithInput(records[0]).fetch_all_rejected()
+        g_messages[g_events.index('questions')] = fetches.fetch_all_questions() 
+        g_messages[g_events.index('rejected')] = fetches.fetch_all_rejected()
 
         # Serve index.html blank.  It will fetch new messages upon loading.
         self.render("index.html", records=records)

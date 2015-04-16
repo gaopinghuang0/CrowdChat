@@ -347,7 +347,7 @@ function reject_poll() {
 
 /* 
  * Click message to show prompt 
- * for worker, just mark as question and cancel
+ * for worker, just has "mark as question" and "cancel"
  * for requester, it has answer and reject
  */
 function click_message_prompt(mode) {

@@ -7,17 +7,43 @@
 	
 	<link rel="icon" type="image/x-icon"  href="https://rawgit.com/gaopinghuang0/warmup6/master/static/favicon.ico" />
 	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/themes/smoothness/jquery-ui.css" />
-	<link rel="stylesheet" type="text/css" href="{{ static_url("perfect-scrollbar.css") }}">
-	<link rel="stylesheet" type="text/css" href="{{ static_url("main.css") }}">
+	<link rel="stylesheet" type="text/css" href="{{ static_url('perfect-scrollbar.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ static_url('main.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ static_url('CrowdChat_UI.css') }}">
 	
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
-	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
-	<script src="{{ static_url("perfect-scrollbar.js") }}"></script>
-	<script src="{{ static_url("main.js") }}"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
+
+	<script type="text/javascript" src="{{ static_url('rooms/chat_room.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('rooms/waiting_room.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('systems/reputation.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('systems/reward.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('users/requester.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('users/worker.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('perfect-scrollbar.js') }}"></script>
+	<script type="text/javascript" src="{{ static_url('main.js') }}"></script>
 </head>
 
 <body>
-  <div class="main">
+
+	<!-- banner for the main page -->
+	<div id="banner">
+		<img id="logo" src="{{ static_url('logo.png') }}" alt="Logo">
+		<img id="user-pic" src="{{ static_url('user-pic.png') }}" alt="User Profile Picture">
+		<img id="exit-pic" src="{{ static_url('exit.png') }}" alt="Exit">
+
+		<img id="reward-point-pic" src="{{ static_url('reward.png') }}" alt="Reward Picture">
+		<p id="reward-point">0</p>
+		
+		<img id="reputation-score-pic" src="{{ static_url('reputation.png') }}" alt="Reputation Picture">
+		<p id="reputation-score">0</p>
+	</div>
+
+	<!-- MHW's code -->
+	<div id="waiting_room"></div>
+	
+	<!-- hgp's code -->
+<div id="chatroom_container">
 	<!-- For question and instruction -->
 	<div class="up">
 		<div class="question"><h1>Help me find my real need of a cellphone</h1></div>
