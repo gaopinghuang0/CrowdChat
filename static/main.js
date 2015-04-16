@@ -115,10 +115,11 @@ function poll() {
 						html = '<li class="message othersmess reqmess"><span messid="'+each_id+'">Requester: ' +
 						       html + '</span></li>';
 					}
-					else {
+					else {  // other workers' message
 						html = '<li class="message othersmess">'+
 							'<div class="head_img"><img src="./static/images/head.jpg"alt="worker"></div>' +
-							'<span messid="'+each_id+'">' + html + '</span></li>';
+							'<span messid="'+each_id+'" title="click to show options">' +
+							html + '</span></li>';
 					}
 				}
 				if (messid_in_prev(each_id, prev_parts) == false) {
@@ -348,7 +349,7 @@ function reject_poll() {
 /* 
  * Click message to show prompt 
  * for worker, just has "mark as question" and "cancel"
- * for requester, it has answer and reject
+ * for requester, it has answer and reject and give points
  */
 function click_message_prompt(mode) {
 	var mess = $(".message span");
@@ -374,13 +375,14 @@ function click_message_prompt(mode) {
 			$(mode).css('display', 'block');
 			prev = now;
 		}
-		stick_pop($(this), $('#messages_display'));
+		stick_pop(mode, $(this), $('#messages_display'));
 	});
 	
 	$('.close').on('click', function(){
 		deselected($("messagepop"));
 		$("#message_input").removeClass('answering');
 		$("#message_input").attr("placeholder","");
+		$(".reward_options").css("display",'none');
 		return false;
 	});
 
@@ -388,11 +390,23 @@ function click_message_prompt(mode) {
 	$('.mark_question').on('click',function(){
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
-		if (!obj.hasClass('rejected')) {  // if not rejected
+		// if not rejected and not a requester's message
+		if (!obj.hasClass('rejected') && !obj.parent().hasClass("reqmess")) {  
 			popup_mess_handler(obj, 'questioned');
 			button_set_color(obj, 'questioned', '.mark_question', 1);
 		}
 	});
+	
+	/* give reward to one message */
+	$(".give_reward").on('click',function(){
+		// use list index "now" to find the span that is selected
+		var obj = find_span_by_index(now);
+		// show the options of reward
+		$(".reward_options").css("display","block");
+		stick_pop('.reward_options', $(this), $('#messages_display'));
+		// reward handler
+	});
+	
 	
 	/* mark message as rejected */
 	$(".reject_mess").on('click', function(){
@@ -407,9 +421,11 @@ function click_message_prompt(mode) {
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		if (!obj.hasClass('rejected')) {  // if not rejected
-			/* 0. if click "answer", mark it as a question too */
-			popup_mess_handler(obj, 'questioned');
-			button_set_color(obj, 'questioned', '.mark_question', 1); 
+			// 0. if it has not been marked as question,
+			// mark it as a question
+			if (!obj.hasClass("questioned")) {
+				popup_mess_handler(obj, 'questioned');
+			}
 			
 			// 1. use the question as the placeholder in the textarea
 			// and add class "answering"
@@ -453,10 +469,16 @@ function click_message_prompt(mode) {
 		return $("#messages_display ul li").eq(ind).find("span").last();
 	}
 	
-	function stick_pop(target, parent){  // target and parent should be jQuery object
+	// source, target and parent should be jQuery object or string
+	function stick_pop(source, target, parent){  
+		// change string into jQuery object
+		if (typeof source == 'string') source = $(source);
+		if (typeof target == 'string') target = $(target);
+		if (typeof parent == 'string') parent = $(parent);
+		
 		var chat = parent[0].getBoundingClientRect();
 		var pos = target[0].getBoundingClientRect();
-		var popup = $(mode).width();  
+		var popup = source.width();  
 		var left = pos.left;
 		
 		// other scroll handlers are cleared
@@ -467,7 +489,7 @@ function click_message_prompt(mode) {
 			left = pos.right - popup;
 		}
 		// set css, absolute position
-		$(mode).css({
+		source.css({
 			position : 'absolute',
 			top: pos.top - pos.height,
 			left: left,
@@ -483,12 +505,12 @@ function click_message_prompt(mode) {
 		parent.on('scroll', function(e){
 			var curr = target[0].getBoundingClientRect();
 			if (chat.top <= curr.top && curr.top <= chat.bottom) {
-				$(mode).css({
+				source.css({
 					top: curr.top - curr.height
 				});
 			} 
 			else {
-				$(mode).css('display', 'none');
+				source.css('display', 'none');
 			}
 		});
 	}

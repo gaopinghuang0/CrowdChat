@@ -17,3 +17,6 @@ CREATE TABLE pending_record (id integer primary key autoincrement,
 CREATE TABLE rating_record (id integer primary key autoincrement,
                              mess_id integer, temp_rating integer,
                              task_id integer, edit_time text);
+CREATE TABLE "worker" ("id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "worker_id" TEXT, "status" INTEGER NOT NULL  DEFAULT 1);
+CREATE TABLE "reward" ("id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "worker_id" TEXT, "record" INTEGER, "time" DATETIME, "mess_id" INTEGER);
+CREATE TABLE "reputation" ("id" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL , "worker_id" TEXT, "mess_id" INTEGER, "record" INTEGER, "time" DATETIME);

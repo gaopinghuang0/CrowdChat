@@ -25,7 +25,6 @@ g_messages = [[] for x in g_events]
 # similarly, g_waiters[0] is used to store set of Future objects for 'messages', corresponding to g_events[0]
 g_waiters = [set() for x in g_events]
 
-# g_waitroom = {'waiting_list':[], 'chat_id1':[]}
 
 class MainHandler(web.RequestHandler):
     def get(self):
