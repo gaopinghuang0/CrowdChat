@@ -6,13 +6,13 @@
 	var g_questioned_num = 0;  
 	var g_rejected_num = 0;
 	var g_worker_id;
+	var g_id_seen = 0;
 	var req_id;
 	var g_task_id;
 	var unique_code;
-	var g_url_prefix = '';
+	var g_url_prefix = '';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
-//	var c_worker;  // worker object
-	
+
 
 jQuery(document).ready(function() {
     $("#message_input").on("keypress", handle_new_message_event);
@@ -29,11 +29,9 @@ jQuery(document).ready(function() {
 		var worknum = g_worker_id == 'BBB' ? 1:2;
 		$("#roommode").text('(worker'+worknum+')');
 	}
-	
-//	c_worker = initial_fetch_worker(g_worker_id);
-//	
-//	display_worker_info();
-	
+    count_user_handler();
+    add_new_ids(); 
+    console.log(g_worker_id);
 	
     poll();  // Check for new messages
     answer_poll(); // Check for new answer messages
@@ -623,8 +621,7 @@ function get_all_ids() {
 	var setting = $("#some_setting");
 	var worker_array = ['AAA', 'BBB', 'CCC'];
 	var ids = {
-			worker_id   : randomChoice(worker_array),
-			hit_id      : makeid(),
+			worker_id   : get_id_by_name('workerId') == "" ? randomChoice(arr) : get_id_by_name('workerId'),
 			req_id      : setting.attr("reqid"),
 			task_id     : setting.attr("taskid"),
 			unique_code : setting.attr("uniquecode")
@@ -632,6 +629,17 @@ function get_all_ids() {
 	
 	function randomChoice(arr){
 	    return arr[Math.floor(arr.length * Math.random())];
+	}
+	
+	function get_id_by_attr(attr) {
+		var obj = $('input[name=hidden_info]');
+		return obj.attr(attr);
+	}
+	
+	function get_id_by_name(name) {
+		var name = 'input[name='+ name + ']';
+		var obj = $(name);
+		return obj.val();
 	}
 	
 	function makeid(){
@@ -698,6 +706,52 @@ function reward_poll(){
 	// 
 	// if (data.results.worker_id == g_worker_id) { // it's me
 	// }
+}
+
+
+/*******************************
+ * For waiting room
+ */
+function count_user_handler(){
+	
+	// update user number from server using AJAX
+	$.ajax({
+		url:url_for("/update_user"),
+		type:"POST",
+		//Get worker ID from javascript and send it to server
+		data: {ids: g_worker_id, num_seen: g_id_seen},
+		//Ajax success, get data from server, this data contains existing ids so far.
+		success:function(data){
+			// document.getElementById("user_number_display").innerHTML = data.user_number;
+			var html_parts = [];
+			var id = data.data.g_ids;
+			for(var i =0; i < id.length; i++){
+				img = '<img src="/static/images/head.jpg" >';
+                html = '<div class="user">' + img + '  ' + id[i] + '</div>';
+				html_parts.push(html);
+			}
+			document.getElementById("user_number_display").innerHTML = html_parts.join("");
+			//record the number of workers
+			g_id_seen = id.length;
+			console.log(g_id_seen, id.length);
+			console.log(g_worker_id);
+			//check for new users 
+			count_user_handler();	
+		},
+		
+	});
+}
+
+function add_new_ids(){
+	
+	$.ajax({
+		url:url_for("/new_user"),
+		type:"POST",
+		data: {ids: g_worker_id},
+		success:function(){
+			setTimeout(add_new_ids,5000);
+			},
+	});
 }
 
 

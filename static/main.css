@@ -239,3 +239,19 @@ li.pending:hover .prompt_content {opacity:1;}
 	display: none;
 	width: 354px;
 }
+
+/* for waiting room */
+.wait_left {
+	float:left;
+	width:175px;
+}
+
+.wait_right {
+	float:right;
+	width:820px;
+}
+
+.wait_up, .wait_left, .wait_right {
+	border:1px solid green;
+	border-radius:6px;
+}

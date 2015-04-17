@@ -10,7 +10,7 @@
 # Version: 0.1
 
 from tornado import ioloop, web, gen, concurrent
-import logging, sys, os, json
+import logging, sys, os, json, time
 import model
 
 # Settings
@@ -18,16 +18,24 @@ PORT             = 8003
 DEBUG            = False
 
 # Global data structures
-g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward']  # all the events that we are handling
+g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward', 'waitroom']  # all the events that we are handling
 # thus, g_messages[0] is used to store global messages, i.e., g_events[0]
 # g_messages[1] is to store global answers, etc
 g_messages = [[] for x in g_events]  
 # similarly, g_waiters[0] is used to store set of Future objects for 'messages', corresponding to g_events[0]
 g_waiters = [set() for x in g_events]
+# g_waitroom['g_worker'] stores old list
+# g_waitroom['g_worker_compare'] stores recent worker_id list
+g_waitroom = {"g_worker":list(),"g_worker_compare":list()}
 g_worker_id = 0
+g_time = time.time()
 
 class MainHandler(web.RequestHandler):
     def get(self):
+        worker_id = self.get_argument('workerId', 'AAA')
+        print worker_id
+        #if worker_id not in g_waitroom["g_worker_compare"]:
+        #    g_waitroom['g_worker_compare'].append(worker_id)
         # fetch random task
         records = model.FetchDataWithout().fetch_random_task()
         fetches = model.FetchDataWithInput(records[0])
@@ -45,7 +53,7 @@ class MainHandler(web.RequestHandler):
         g_messages[g_events.index('rejected')] = fetches.fetch_all_rejected()
 
         # Serve index.html blank.  It will fetch new messages upon loading.
-        self.render("index.html", records=records)
+        self.render("index.html", records=records, workerid=worker_id)
 
 class NewHandler(web.RequestHandler):
     def post(self):
@@ -264,8 +272,10 @@ class NewRewardHandler(web.RequestHandler):
 class UpdateRewardHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
-        curr_num = int(self.get_argument("...", 0))
-        index = g_events.index('reward')  # Get the index in the g_events, 3
+        index = g_events.index('reward')  # Get the index in the g_events, 4
+        curr_point = int(self.get_argument("...", 0))
+        worker_id = int(self.get_argument("worker_id", 0))
+
         if curr_num == len(g_messages[index]):
             self._future = concurrent.Future() # Create an empty Future object
             g_waiters[index].add(self._future)                # Add it to the global set of waiters
@@ -273,15 +283,68 @@ class UpdateRewardHandler(web.RequestHandler):
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
-            self.write({"results": self.fetch_one_reward()})  # This sets Content-Type header automatically
+            self.write({"results": self.fetch_one_reward(worker_id)})  # This sets Content-Type header automatically
     
     # return {'worker_id':'xadf', 'total_reward': 120} based on g_worker_id
     def fetch_one_reward(self):
         pass
     
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
-        g_waiters[g_events.index('rejected')].remove(self._future)
+        g_waiters[g_events.index('reward')].remove(self._future)
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s) 
+
+
+class NewUserHandler(web.RequestHandler):
+    def post(self):
+        index = g_events.index('waitroom')  # Get the index in the g_events, 5       
+        # add id to compare list 
+        worker_id = self.get_argument("ids")
+        if worker_id not in g_waitroom["g_worker_compare"]:
+            g_waitroom['g_worker_compare'].append(worker_id)
+        # compare list with real g_worker
+        # if g_waitroom["g_worker"] != g_waitroom["g_worker_compare"]:
+        current_time = time.time()
+        global g_time
+        print g_time, worker_id
+        #print current_time
+        if current_time - g_time > 5:
+            g_time = current_time
+            #for future in g_waiters[index]:
+            #    future.set_result(g_ids)
+            g_waitroom["g_worker"] = g_waitroom["g_worker_compare"]
+        
+        if g_waitroom["g_worker"] == g_waitroom["g_worker_compare"]:
+            for future in g_waiters[index]:
+                future.set_result(g_waitroom["g_worker"])
+            g_waitroom["g_worker_compare"]= []
+            #Clear the waiters list
+            g_waiters[index].clear()
+
+        
+class UpdateUserHandler(web.RequestHandler):
+    @gen.coroutine
+    def post(self):
+        index = g_events.index('waitroom')  # Get the index in the g_events, 5   
+        #Get num_seen so far
+        num_seen = int(self.get_argument("num_seen"))
+        
+        print 'num_see', num_seen
+        if num_seen == len(g_waitroom["g_worker"]):
+            print "in here"
+            self._future = concurrent.Future()
+            g_waiters[index].add(self._future)
+            yield self._future
+
+        data = {"worker_number":len(g_waitroom["g_worker"]),"g_ids":g_waitroom["g_worker"]}
+        
+        if not self.request.connection.stream.closed():
+            self.write({"data":data})
+        
+    
+    def on_connection_close(self):
+        g_waiters[g_events.index('waitroom')].remove(self._future) 
+        self._future.set_result([])
+ 
 
 
 def atomic_id_append(results, key, g_results):
@@ -307,7 +370,9 @@ def main():
           (r"/rejected",    RejectHandler),
           (r"/cast_reject", CastRejectHandler),
           (r"/new_reward",  NewRewardHandler),
-          (r"/update_reward", UpdateRewardHandler),],
+          (r"/update_reward", UpdateRewardHandler),
+          (r"/new_user",     NewUserHandler),
+          (r"/update_user", UpdateUserHandler),],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
         static_path   = os.path.join(os.path.dirname(__file__), "static"),
         debug         = DEBUG,
