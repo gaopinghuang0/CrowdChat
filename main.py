@@ -18,7 +18,7 @@ PORT             = 8003
 DEBUG            = False
 
 # Global data structures
-g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward', 'waitroom']  # all the events that we are handling
+g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward']  # all the events that we are handling
 # thus, g_messages[0] is used to store global messages, i.e., g_events[0]
 # g_messages[1] is to store global answers, etc
 g_messages = [[] for x in g_events]  
@@ -27,6 +27,8 @@ g_waiters = [set() for x in g_events]
 # g_waitroom['g_worker'] stores old list
 # g_waitroom['g_worker_compare'] stores recent worker_id list
 g_waitroom = {"g_worker":list(),"g_worker_compare":list()}
+# g_waitroom_set 
+g_waitroom_set = set()
 g_worker_id = 0
 g_time = time.time()
 
@@ -296,7 +298,6 @@ class UpdateRewardHandler(web.RequestHandler):
 
 class NewUserHandler(web.RequestHandler):
     def post(self):
-        index = g_events.index('waitroom')  # Get the index in the g_events, 5       
         # add id to compare list 
         worker_id = self.get_argument("ids")
         if worker_id not in g_waitroom["g_worker_compare"]:
@@ -314,17 +315,16 @@ class NewUserHandler(web.RequestHandler):
             g_waitroom["g_worker"] = g_waitroom["g_worker_compare"]
         
         if g_waitroom["g_worker"] == g_waitroom["g_worker_compare"]:
-            for future in g_waiters[index]:
+            for future in g_waitroom_set:
                 future.set_result(g_waitroom["g_worker"])
             g_waitroom["g_worker_compare"]= []
             #Clear the waiters list
-            g_waiters[index].clear()
+            g_waitroom_set.clear()
 
         
 class UpdateUserHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
-        index = g_events.index('waitroom')  # Get the index in the g_events, 5   
         #Get num_seen so far
         num_seen = int(self.get_argument("num_seen"))
         
@@ -332,7 +332,7 @@ class UpdateUserHandler(web.RequestHandler):
         if num_seen == len(g_waitroom["g_worker"]):
             print "in here"
             self._future = concurrent.Future()
-            g_waiters[index].add(self._future)
+            g_waitroom_set.add(self._future)
             yield self._future
 
         data = {"worker_number":len(g_waitroom["g_worker"]),"g_ids":g_waitroom["g_worker"]}
@@ -342,7 +342,7 @@ class UpdateUserHandler(web.RequestHandler):
         
     
     def on_connection_close(self):
-        g_waiters[g_events.index('waitroom')].remove(self._future) 
+        g_waitroom_set.remove(self._future) 
         self._future.set_result([])
  
 
