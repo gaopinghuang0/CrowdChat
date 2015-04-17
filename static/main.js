@@ -405,12 +405,14 @@ function click_message_prompt(mode) {
 		// show the options of reward
 		$(".reward_options").css("display","block");
 		stick_pop('.reward_options', $(this), $('#messages_display'));
-		// reward handler
-		$().on('click',function(){
+		// reward click handler
+		$(".reward_button").on('click',function(){
 			var button_id = $(this).attr('id');
-			var messid = xxx;
-			update_reward(messid, parseInt(button_id.substr(5)));
-		}
+			console.log(button_id);
+			var messid = obj.attr("messid");
+			console.log(messid);
+			//update_reward(messid, parseInt(button_id.substr(5)));
+		});
 	});
 	
 	
@@ -482,23 +484,24 @@ function click_message_prompt(mode) {
 		if (typeof target == 'string') target = $(target);
 		if (typeof parent == 'string') parent = $(parent);
 		
-		var chat = parent[0].getBoundingClientRect();
-		var pos = target[0].getBoundingClientRect();
-		var popup = source.width();  
-		var left = pos.left;
+		var par = parent[0].getBoundingClientRect();
+		var tar = target[0].getBoundingClientRect();
+		var src = source[0].getBoundingClientRect();
+		var wid = source.width();  
+		var left = tar.left;
 		
 		// other scroll handlers are cleared
 		parent.unbind("scroll"); // quite nice ^_^
 		
 		// prevent popup from going out of left/right
-		if (pos.left + popup >= chat.right) { 
-			left = pos.right - popup;
+		if (left + wid >= par.right) { 
+			left = tar.right - wid;
 		}
 		// set css, absolute position
 		source.css({
 			position : 'absolute',
-			top: pos.top - pos.height,
-			left: left,
+			top: Math.min(tar.top - src.height, tar.top - tar.height),
+			left: Math.max(left, src.left),
 		});
 		
 		/* Add special color for clicked event */
@@ -510,9 +513,10 @@ function click_message_prompt(mode) {
 		// if the message is out of view, clear the popup
 		parent.on('scroll', function(e){
 			var curr = target[0].getBoundingClientRect();
-			if (chat.top <= curr.top && curr.top <= chat.bottom) {
+			var curr_src = source[0].getBoundingClientRect();
+			if (par.top <= curr.top && curr.top <= par.bottom) {
 				source.css({
-					top: curr.top - curr.height
+					top: curr.top - curr_src.height
 				});
 			} 
 			else {

@@ -197,6 +197,22 @@ li.pending:hover .prompt_content {opacity:1;}
 	text-decoration: underline;
 }
 
+.reward_options {
+	width:30px;
+	background-color: #fff;
+	border:1px solid gray;
+}
+
+.reward_button {
+	cursor:pointer;
+	padding:3px;
+	border-bottom:1px solid gray;
+}
+
+.reward_button:hover {
+	background-color: gray;
+	color: #fff;
+}
 .qa_pair {
 	border-bottom: 1px gray dashed;
 	text-align:left;
