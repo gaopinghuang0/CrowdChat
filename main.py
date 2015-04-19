@@ -34,12 +34,39 @@ g_time = time.time()
 
 class MainHandler(web.RequestHandler):
     def get(self):
-        worker_id = self.get_argument('workerId', 'AAA')
-        print worker_id
-        #if worker_id not in g_waitroom["g_worker_compare"]:
-        #    g_waitroom['g_worker_compare'].append(worker_id)
-        # fetch random task
-        records = model.FetchDataWithout().fetch_random_task()
+        infos = {
+                 'worker_id': self.get_argument('workerId', 'AAA'),
+                 'assign_id': self.get_argument('assignmentId'),
+                 'assign_id': self.get_argument('assignmentId'),
+                 'assign_id': self.get_argument('assignmentId')
+                 }
+
+        # Serve index.html blank.  It will fetch new messages upon loading.
+        self.render("index.html", infos=infos)
+
+class FetchAllTaskHandler(web.RequestHandler):
+    def post(self):
+        tasks = model.FetchDataWithout().fetch_all_task()
+        self.write({"tasks":tasks})
+
+        
+
+class SwitchHandler(web.RequestHandler):
+    def post(self):
+        #Data from ajax: when trigger,
+        data = {
+                'task_id'       :   self.get_argument(""),
+                'worker_id'     :   self.get_argument("")
+                }
+        
+        model.ModifyData(data).insert_switch_chatrooom_data()
+        ##
+        
+        records = self.initiate_g_records(data["task_id"])
+        return records
+        
+    def initiate_g_records(self, task_id):
+        records = model.FetchDataWithout().fetich_task_by_id(task_id)
         fetches = model.FetchDataWithInput(records[0])
         # records[0] means the only one task
         messages = fetches.fetch_all_messages()
@@ -54,9 +81,8 @@ class MainHandler(web.RequestHandler):
         g_messages[g_events.index('questions')] = fetches.fetch_all_questions() 
         g_messages[g_events.index('rejected')] = fetches.fetch_all_rejected()
         g_messages[g_events.index('reward')] = fetches.fetch_all_worker_reward()
+        return records
 
-        # Serve index.html blank.  It will fetch new messages upon loading.
-        self.render("index.html", records=records, workerid=worker_id)
 
 class NewHandler(web.RequestHandler):
     def post(self):
@@ -353,7 +379,7 @@ class UpdateUserHandler(web.RequestHandler):
         self._future.set_result([])
  
 
-
+        
 def atomic_id_append(results, key, g_results):
     ids = []  # ids that are already in g_results
     for g_result in g_results:
@@ -378,7 +404,9 @@ def main():
           (r"/cast_reject", CastRejectHandler),
           (r"/new_reward",  NewRewardHandler),
           (r"/update_reward", UpdateRewardHandler),
-          (r"/new_user",     NewUserHandler),
+          (r"/new_user",    NewUserHandler),
+          (r"/switch",      SwitchHandler),
+          (r"/Fetch",       FetchAllTaskHandler),
           (r"/update_user", UpdateUserHandler),],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
         static_path   = os.path.join(os.path.dirname(__file__), "static"),
