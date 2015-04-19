@@ -64,7 +64,7 @@
 </div>
 	
 	<!-- hgp's code -->
-<div id="chatroom_container" style="display:none;">
+<div id="chatroom_container" style="display:block;">
 	<!-- For question and instruction -->
 	<div class="up">
 		<div class="question"><h1>Help me find my real need of a cellphone</h1></div>
@@ -99,9 +99,7 @@
 	<div class="clear"></div>
 	
 	<!-- For copyright and feedback -->
-	<div class="footer">
-	<input type="hidden" id="some_setting" reqid="{{ records[0]['requester_id']}}"
-	 taskid="{{records[0]['task_id']}}" uniquecode="{{records[0]['unique_code']}}"></div>
+	<div class="footer"></div>
  </div>
 
 <!-- below is some hidden area for popup -->
@@ -121,10 +119,21 @@
 		<div class="reward_button" id="add_p50">+50</div>
 	</div>
 	<div id="dialog_confirm"></div>
-	
+
+<!-- Hidden infos that will be sent to AMT -->
 	<form id="main_form">
-		<input type="hidden" name="workerId" value="{{workerid}}">
+		<input type="hidden" name="assignmentId" value="{{ infos['assign_id']}}">
+		<input type="hidden" name="workerId" value="{{ infos['worker_id']}}">
+		<input type="hidden" name="reqid" value="{{ records[0]['requester_id']}}">
+		<input type="hidden" name="task_id" value="{{ records[0]['task_id']}}">
+		<input type="hidden" name="uniquecode" value="{{ records[0]['unique_code']}}">
 	</form>
+	
+<!-- Hidden infos that will not be sent to AMT -->
+	<div class="hidden_infos">
+		<input type="hidden" name="hitId" value="{{infos['hit_id']}}">	
+		<input type="hidden" name="turkSubmitTo" value="{{infos['turkSubmitTo']}}">	
+	</div>
 </body>
 </html>
 <!-- vim: set fileencoding=utf-8 tabstop=2 shiftwidth=2 expandtab: -->

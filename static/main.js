@@ -16,13 +16,18 @@
 
 
 jQuery(document).ready(function() {
+	initiate_chatroom(1);   // for test, task_id is set to 1
+});
+
+
+function initiate_chatroom(task_id) {
     $("#message_input").on("keypress", handle_new_message_event);
 	$("#messages_display").perfectScrollbar();
 	$("#candidates_container").perfectScrollbar();
 	$("#message_input").select();
 	g_worker_id = get_all_ids().worker_id;
 	req_id = get_all_ids().req_id;
-	g_task_id = get_all_ids().task_id;
+	g_task_id = task_id;
 	unique_code = get_all_ids().unique_code;
 	if (req_id == g_worker_id) {
 		$("#roommode").text('(requester)');
@@ -40,19 +45,7 @@ jQuery(document).ready(function() {
     marking_poll();  // Check for new marking question
     reject_poll();   // Check for new rejecting message
     reward_poll();   // check for new reward
-});
-//
-//
-//function initial_fetch_worker(worker_id) {
-//	var data = initital_ajax(worker_id);  // json, return from server
-//	var c_worker = new worker(worker_id);
-//	c_worker.set_status(data.status);
-//	c_worker.reward.set_point(data.point);
-//	
-//	
-//	
-//	return c_worker;
-//}
+}
 
 
 function handle_new_message_event(evt) {
@@ -411,7 +404,7 @@ function click_message_prompt(mode) {
 			var messid = obj.attr("messid");
 			console.log(messid);
 			var reward_point = parseInt(button_id.substr(5));
-			reward_point = typeof reward_point == "int" ? reward_point : 10;
+			reward_point = typeof reward_point == "number" ? reward_point : 10;
 			//update_reward(messid, reward_point);
 			//update_reputation(messid);
 		});
@@ -619,19 +612,19 @@ function scroll_to_view(flag) {
 //}
 
 /**
- * Module to get all useful ids
+ * Module to get all constant ids,
+ * not for changable id
  */
 function get_all_ids() {
-	var setting = $("#some_setting");
-	var worker_array = ['AAA', 'BBB', 'CCC'];
 	var ids = {
-			worker_id   : get_id_by_name('workerId') == "" ? randomChoice(arr) : get_id_by_name('workerId'),
-			req_id      : setting.attr("reqid"),
-			task_id     : setting.attr("taskid"),
-			unique_code : setting.attr("uniquecode")
+			worker_id   : get_id_by_name('workerId') || makeid(),
+			req_id      : get_id_by_name("reqid"),
+			unique_code : get_id_by_name("uniquecode"),
+			task_id     : get_id_by_name("task_id"),
 	}
 	
-	function randomChoice(arr){
+	function randomChoice(){
+		var arr = ['AAA', 'BBB', 'CCC'];
 	    return arr[Math.floor(arr.length * Math.random())];
 	}
 	
@@ -657,6 +650,32 @@ function get_all_ids() {
 	}
 
 	return ids;
+}
+
+/*
+ * Set all ids using data from ajax
+ */
+function set_all_ids(key, value){
+	function set_id_by_name(name, value){
+		var name = 'input[name=' + name + ']';
+		var obj = $(name);
+		// obj.val() will never be false
+		return obj.length > 0 ? obj.val(value) : false;
+	}
+	
+	function set_id_by_class(classname, value){
+		var obj = $(classname);
+		return obj.length > 0 ? obj.val(value) : false;
+	}
+	
+	function set_id_by_id(id, value){
+		var obj = $(id);
+		return obj.length > 0 ? obj.val(value) : false;
+	}
+	
+	// return false if not exists, return jQuery object if success
+	// jQuery object won't equal to false
+	return set_id_by_name(key, value);
 }
 
 function url_for(url) {

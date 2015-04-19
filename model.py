@@ -146,7 +146,7 @@ class FetchDataWithInput(InOut):
     # fetch all_worker_reward based on worker_id
     def fetch_all_worker_reward(self):
         records = tuple(db.query('''SELECT worker.total_reward as total_reward, 
-                    worker.worker_id as worker_id where worker.worker_id = chatroom_record.worker_id and 
+                    worker.worker_id as worker_id from worker, chatroom_record where worker.worker_id = chatroom_record.worker_id and 
                     chatroom_record.task_id=%d'''%(self.task_id)))
         return self.tuple_to_list(records)
     
