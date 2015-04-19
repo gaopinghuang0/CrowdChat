@@ -68,7 +68,7 @@ class SwitchHandler(web.RequestHandler):
         return records
         
     def initiate_g_records(self, task_id):
-        records = model.FetchDataWithInput().fetich_task_by_id(task_id)
+        records = model.FetchDataWithout().fetch_task_by_id(task_id)
         fetches = model.FetchDataWithInput(records[0])
         # records[0] means the only one task
         messages = fetches.fetch_all_messages()

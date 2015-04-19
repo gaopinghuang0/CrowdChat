@@ -162,8 +162,18 @@ class FetchDataWithout(object):
     
     ''' Fetch data with no input or match condition. '''
     
-    def fetch_random_task(self):
-        tasks = tuple(db.query("SELECT * from task ORDER BY RANDOM() LIMIT 1"))
+    def fetch_task_by_id(self, task_id):
+        tasks = tuple(db.select('task',
+                                where="task_id=$task_id",
+                                vars={"task_id":task_id}
+                                  ))
+        return self.append_task_info(tasks)
+    
+    def fetch_all_task(self):
+        tasks = tuple(db.query('''SELECT id, text from task '''  ))
+        return self.append_task_info(tasks)
+    
+    def append_task_info(self, tasks):
         records = []
         for task in tasks:
             task_id = task.id
@@ -176,11 +186,7 @@ class FetchDataWithout(object):
                       "unique_code"   : generate_unique_code()
                       }
             records.append(record)
-        return records
-    
-    def fetch_all_task(self):
-        tasks = tuple(db.query('''SELECT id, text from task '''  ))
-        return self.tuple_to_list(tasks)
+        return InOut({}).tuple_to_list(records)
 
 def generate_unique_code(size=8, chars=string.ascii_uppercase + 
                     string.ascii_lowercase + string.digits):
