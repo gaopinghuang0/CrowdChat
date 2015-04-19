@@ -7,6 +7,7 @@
 	var g_rejected_num = 0;
 	var g_worker_id;
 	var g_id_seen = 0;
+	var g_total_reward = 0;
 	var req_id;
 	var g_task_id;
 	var unique_code;
@@ -409,7 +410,10 @@ function click_message_prompt(mode) {
 			console.log(button_id);
 			var messid = obj.attr("messid");
 			console.log(messid);
-			//update_reward(messid, parseInt(button_id.substr(5)));
+			var reward_point = parseInt(button_id.substr(5));
+			reward_point = typeof reward_point == "int" ? reward_point : 10;
+			//update_reward(messid, reward_point);
+			//update_reputation(messid);
 		});
 	});
 	
@@ -683,29 +687,49 @@ function open_error_dialog() {
 		}
 	});
 }
-
 //update current reward point
 function update_reward(messid, point) {
-                jQuery.ajax({
-                        url: url_for("/new_reward"),
-                        data: { mess_id: messid,
-                        	    reward_point : point,
-                        		task_id: g_task_id
-                                },
-                        type: "POST",
-                        success: function(data, text_status, jq_xhr) {
-                                $("reward_point").val(data.reward_point); //update the banner               
-                        },
-                        error: function(jq_xhr, text_status, error_thrown) {
-                                console.log("ERROR SENDING REWARD POINTS:", error_thrown);
-                        }
-                });
+	jQuery.ajax({
+		url: url_for("/new_reward"),
+		data: { mess_id: messid,
+				reward_point: point,
+				task_id: g_task_id
+    	},
+		type: "POST",
+		success: function(data, text_status, jq_xhr) {
+			$("reward_point").val(data.reward_point); //update the banner  
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+			console.log("ERROR SENDING REWARD POINTS:", error_thrown);
+		}
+	});
 }
 
 function reward_poll(){
-	// 
-	// if (data.results.worker_id == g_worker_id) { // it's me
-	// }
+	jQuery.ajax({
+		url: url_for("/update_reward"),
+		type: "POST",
+		data: { task_id: g_task_id,
+				worker_id: g_worker_id,
+				total_reward: g_total_reward
+    	},
+		success: function(data, text_status, jq_xhr) {
+
+			g_total_reward = data.results.total_reward;
+			
+			if (data.results.worker_id == g_worker_id) {
+				$("#reward_point").val(g_total_reward); //update the banner 
+			}
+			
+            // Check for new reward updates (again)
+			reward_poll();
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+            // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
+			console.log("ERROR FETCHING REWARD UPDATE:", error_thrown);
+			setTimeout(reward_poll, 1000);
+		}
+	});
 }
 
 

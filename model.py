@@ -87,10 +87,10 @@ class ModifyData(InOut):
                   temp_reward=self.reward_point, edit_time=self.edit_time)
         # fetch old points based on the mess_id
         # add old points and new point
-        records = tuple(db.query('''SELECT worker.reward as reward, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
+        records = tuple(db.query('''SELECT worker.total_reward as total_reward, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
                     message.id=%d'''%(self.mess_id)))[0]
-        old_reward, worker_id = records.reward, records.worker_id
-        db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, reward=old_reward+self.reward_point)
+        old_reward, worker_id = records.total_reward, records.worker_id
+        db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, total_reward=old_reward+self.reward_point)
         return worker_id  # return worker.id, not worker.worker_id
     
     # insert the question mark record to question_record table    
@@ -144,8 +144,11 @@ class FetchDataWithInput(InOut):
         return self.tuple_to_list(records)
     
     # fetch all_worker_reward based on worker_id
-    def fetch_worker_reward(self):
-        pass
+    def fetch_all_worker_reward(self):
+        records = tuple(db.query('''SELECT worker.total_reward as total_reward, 
+                    worker.worker_id as worker_id where worker.worker_id = chatroom_record.worker_id and 
+                    chatroom_record.task_id=%d'''%(self.task_id)))
+        return self.tuple_to_list(records)
     
 class FetchDataWithout(object):
     
