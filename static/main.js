@@ -737,7 +737,7 @@ function reward_poll(){
 			g_total_reward = data.results.total_reward;
 			
 			if (data.results.worker_id == g_worker_id) {
-				$("#reward_point").val(g_total_reward); //update the banner 
+				$("#reward_point").text(g_total_reward); //update the banner 
 			}
 			
             // Check for new reward updates (again)
