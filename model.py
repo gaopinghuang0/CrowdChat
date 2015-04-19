@@ -83,7 +83,7 @@ class ModifyData(InOut):
     def insert_switch_chatroom_data(self):
         
         db.insert('chatroom_record', task_id = self.task_id, worker_id = self.worker_id, \
-                  enter_time = self.edit_time )
+                  enter_time = self.edit_time, in_room = self.in_room )
         
     # insert into table rating_record
     # and update the rating column in table message          
@@ -176,9 +176,7 @@ class FetchDataWithout(object):
         return records
     
     def fetch_all_task(self):
-        tasks = tuple(db.select('task',
-                                 where="id"        
-                                ))
+        tasks = tuple(db.query('''SELECT id, text from task '''  ))
         return self.tuple_to_list(tasks)
 
 def generate_unique_code(size=8, chars=string.ascii_uppercase + 

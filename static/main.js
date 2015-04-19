@@ -754,30 +754,49 @@ function add_new_ids(){
 	});
 }
 
-$("#").click(function(){
-	var task_id = 
-	var worker_id = g_worker_id; 
-	var currentdate = new Date();
-	var in_room = 1;
-	var enter_time = "Enter time:" + currentdate.getDate() + "/"
-					+ (currentdate.getMonth()+1) + "/"
-					+currentdate.getFullYear() + "@"
-					+currentdate.getHours() + ":"
-					+currentdate.getMinutes() + ":"
-					+currentdate.getSeconds();
-	
-	document.getElementById("waiting_room").style.display = "none";
-	document.getElementById("chatroom_containter").style.display = "block";
+
+
+/// initiate task list. Fetch task id from task and use javascript to create task list
+function initiate_task_list(){
 	$.ajax({
-		url:"/switch",
+		url:"/task",
 		type:"POST",
-		data: {task_id:task_id, worker_id:worker_id,enter_time:enter_time },
-		success: on_success_switch_chatroom
-		
+		success : function(data){
+			var html_parts = [];
+			var task = data.tasks;
+			for(var i =0; i < data.tasks.length; i++){
+                html = '<div class="task" id=' + i + '>' + '  ' + tasks[i].text + '<input type="button" id='+tasks[i].id+' name="enter">'+' onClick="return_clicked_id(this.id)" </div>';
+				html_parts.push(html);
+			}
+			document.getElementById("task_number_display").innerHTML = html_parts.join("");
+			
+			
+		},
 		
 	});
 	
-})
+}
+/// when worker click on button
+function return_clicked_id(clicked_id){
+	
+		var task_id = clicked_id 
+		var worker_id = g_worker_id; 
+		var in_room = 1;
+/// switch to chatroom
+		document.getElementById("waiting_room").style.display = "none";
+		document.getElementById("chatroom_containter").style.display = "block";
+		$.ajax({
+			url:"/switch",
+			type:"POST",
+			data: {task_id:task_id, worker_id:worker_id,in_room = in_room },
+			success: on_success_switch_chatroom
+			
+			
+		});
+		
+	}
+	
+	
 
 
 function on_success_switch_chatroom(data){

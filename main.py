@@ -37,14 +37,15 @@ class MainHandler(web.RequestHandler):
         infos = {
                  'worker_id': self.get_argument('workerId', 'AAA'),
                  'assign_id': self.get_argument('assignmentId'),
-                 'assign_id': self.get_argument('assignmentId'),
-                 'assign_id': self.get_argument('assignmentId')
+                 'hit_id': self.get_argument('hitId'),
+                 'turkSubmitTo': self.get_argument('turkSubmitTo')
                  }
 
         # Serve index.html blank.  It will fetch new messages upon loading.
         self.render("index.html", infos=infos)
 
 class FetchAllTaskHandler(web.RequestHandler):
+    # fetch all tasks and send back to brower
     def post(self):
         tasks = model.FetchDataWithout().fetch_all_task()
         self.write({"tasks":tasks})
@@ -55,8 +56,9 @@ class SwitchHandler(web.RequestHandler):
     def post(self):
         #Data from ajax: when trigger,
         data = {
-                'task_id'       :   self.get_argument(""),
-                'worker_id'     :   self.get_argument("")
+                'task_id'       :   self.get_argument("task_id"),
+                'worker_id'     :   self.get_argument("worker_id"),
+                'in_room'       :   self.get_argument("in_room"),
                 }
         
         model.ModifyData(data).insert_switch_chatrooom_data()
@@ -66,7 +68,7 @@ class SwitchHandler(web.RequestHandler):
         return records
         
     def initiate_g_records(self, task_id):
-        records = model.FetchDataWithout().fetich_task_by_id(task_id)
+        records = model.FetchDataWithInput().fetich_task_by_id(task_id)
         fetches = model.FetchDataWithInput(records[0])
         # records[0] means the only one task
         messages = fetches.fetch_all_messages()
@@ -399,7 +401,7 @@ def main():
           (r"/update_reward", UpdateRewardHandler),
           (r"/new_user",    NewUserHandler),
           (r"/switch",      SwitchHandler),
-          (r"/Fetch",       FetchAllTaskHandler),
+          (r"/task",       FetchAllTaskHandler),
           (r"/update_user", UpdateUserHandler),],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
         static_path   = os.path.join(os.path.dirname(__file__), "static"),
