@@ -82,6 +82,7 @@ class SwitchHandler(web.RequestHandler):
         # global g_messages
         g_messages[g_events.index('questions')] = fetches.fetch_all_questions() 
         g_messages[g_events.index('rejected')] = fetches.fetch_all_rejected()
+        g_messages[g_events.index('reward')] = fetches.fetch_all_worker_reward()
         return records
 
 
@@ -197,7 +198,6 @@ class QuestionHandler(web.RequestHandler):
         model.ModifyData(mark_posts).update_questioned()
         
         # fetch all of the agreed messages'id with task_id to a list
-        global g_messages
         g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_questions()
         
         # Notify all waiting /update requests
@@ -243,7 +243,6 @@ class RejectHandler(web.RequestHandler):
         model.ModifyData(mark_posts).update_rejected()
         
         # fetch all of the agreed messages'id with task_id to a list
-        global g_messages
         g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_rejected()
 
         # Notify all waiting /update requests
@@ -283,12 +282,12 @@ class NewRewardHandler(web.RequestHandler):
                  'reward_point': self.get_argument("reward_point")
                  }
         
-        # update the rating column in table message, and get id
+        # update the reward column in table message, and get id
         worker_id = model.ModifyData(mark_posts).update_reward()
-        # fetch all of the agreed messages'id with task_id to a list
-        global g_messages, g_worker_id
-        g_messages[index] = model.FetchDataWithInput({'worker_id':worker_id}).fetch_worker_reward() #fetch reward point of current worker
-        g_worker_id = worker_id
+
+        #fetch reward point of current worker
+        g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_worker_reward()
+        
         # Notify all waiting /update requests
         for future in g_waiters[index]:
     
@@ -303,21 +302,29 @@ class UpdateRewardHandler(web.RequestHandler):
     @gen.coroutine
     def post(self):
         index = g_events.index('reward')  # Get the index in the g_events, 4
-        curr_point = int(self.get_argument("...", 0))
-        worker_id = int(self.get_argument("worker_id", 0))
-
-        if curr_num == len(g_messages[index]):
+        total_reward = int(self.get_argument("total_reward", 0))
+        worker_id = self.get_argument("worker_id", 0)
+        worker_reward = self.fetch_one_reward(worker_id)
+        if total_reward == worker_reward['total_reward']:
             self._future = concurrent.Future() # Create an empty Future object
             g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
 
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
-            self.write({"results": self.fetch_one_reward(worker_id)})  # This sets Content-Type header automatically
+            self.write({"results": worker_reward})  # This sets Content-Type header automatically
     
     # return {'worker_id':'xadf', 'total_reward': 120} based on g_worker_id
-    def fetch_one_reward(self):
-        pass
+    def fetch_one_reward(self, worker_id):
+        index = g_events.index('reward')  # Get the index in the g_events, 4
+        mark_posts = {}
+        for record in g_messages[index]:
+            if record['worker_id'] == worker_id:
+                mark_posts = record
+                break
+        if len(mark_posts) == 0:
+            mark_posts = {'worker_id': "None", "total_reward": 0}
+        return mark_posts
     
     def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
         g_waiters[g_events.index('reward')].remove(self._future)
