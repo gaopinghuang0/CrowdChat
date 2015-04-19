@@ -60,6 +60,7 @@
 	
 	<div class="wait_right">
 	<div class="dialog_header"><h2>Task list</h2></div>
+	<div id="task_number_display"></div>
 	</div>
 </div>
 	
@@ -123,7 +124,8 @@
 	<div id="dialog_confirm"></div>
 	
 	<form id="main_form">
-		<input type="hidden" name="workerId" value="{{workerid}}">
+		<input type="hidden" name="assignmentId" value="{{infos['assign_id']}}">
+		<input type="hidden" name="workerId" value="{{infos['worker_id']}}">
 	</form>
 </body>
 </html>

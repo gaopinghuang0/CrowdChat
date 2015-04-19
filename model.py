@@ -79,7 +79,12 @@ class ModifyData(InOut):
                       task_id=self.task_id, edit_time=self.edit_time)
             # update the 'answered' column of question id
             db.update('message', where="id=$id", vars={'id':self.mess_id}, answered=self.answered)
-            
+    # insert info of worker when enter chatrooom
+    def insert_switch_chatroom_data(self):
+        
+        db.insert('chatroom_record', task_id = self.task_id, worker_id = self.worker_id, \
+                  enter_time = self.edit_time )
+        
     # insert into table rating_record
     # and update the rating column in table message          
     def update_reward(self):
@@ -147,6 +152,9 @@ class FetchDataWithInput(InOut):
     def fetch_worker_reward(self):
         pass
     
+    # fetch 
+    
+    
 class FetchDataWithout(object):
     
     ''' Fetch data with no input or match condition. '''
@@ -166,7 +174,12 @@ class FetchDataWithout(object):
                       }
             records.append(record)
         return records
-
+    
+    def fetch_all_task(self):
+        tasks = tuple(db.select('task',
+                                 where="id"        
+                                ))
+        return self.tuple_to_list(tasks)
 
 def generate_unique_code(size=8, chars=string.ascii_uppercase + 
                     string.ascii_lowercase + string.digits):

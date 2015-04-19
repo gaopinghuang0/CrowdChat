@@ -621,7 +621,7 @@ function get_all_ids() {
 	var setting = $("#some_setting");
 	var worker_array = ['AAA', 'BBB', 'CCC'];
 	var ids = {
-			worker_id   : get_id_by_name('workerId') == "" ? randomChoice(arr) : get_id_by_name('workerId'),
+			worker_id   : get_id_by_name('workerId') || randomChoice(arr),
 			req_id      : setting.attr("reqid"),
 			task_id     : setting.attr("taskid"),
 			unique_code : setting.attr("uniquecode")
@@ -753,6 +753,38 @@ function add_new_ids(){
 			},
 	});
 }
+
+$("#").click(function(){
+	var task_id = 
+	var worker_id = g_worker_id; 
+	var currentdate = new Date();
+	var in_room = 1;
+	var enter_time = "Enter time:" + currentdate.getDate() + "/"
+					+ (currentdate.getMonth()+1) + "/"
+					+currentdate.getFullYear() + "@"
+					+currentdate.getHours() + ":"
+					+currentdate.getMinutes() + ":"
+					+currentdate.getSeconds();
+	
+	document.getElementById("waiting_room").style.display = "none";
+	document.getElementById("chatroom_containter").style.display = "block";
+	$.ajax({
+		url:"/switch",
+		type:"POST",
+		data: {task_id:task_id, worker_id:worker_id,enter_time:enter_time },
+		success: on_success_switch_chatroom
+		
+		
+	});
+	
+})
+
+
+function on_success_switch_chatroom(data){
+	// data = results
+	set_all_ids(data);
+}
+
 
 
 })(jQuery);
