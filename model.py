@@ -98,6 +98,24 @@ class ModifyData(InOut):
         db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, total_reward=old_reward+self.reward_point)
         return worker_id  # return worker.id, not worker.worker_id
     
+    # insert into table reputation_record
+    # and update the reputation column in table message          
+    def update_reputation(self):
+        db.insert('reputation_record', task_id=self.task_id, mess_id=self.mess_id, \
+                  temp_reputation=self.reputation_change, edit_time=self.edit_time)
+        # fetch old points based on the mess_id
+        # add old points and new point
+        records = tuple(db.query('''SELECT worker.reputation as reputation, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
+                    message.id=%d'''%(self.mess_id)))[0]
+        old_reputation, worker_id = records.reputation, records.worker_id
+        db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, reputation=old_reputation+self.reputation_change)
+        
+        #set status of worker to be 0 if he or she has a reputation of -10
+        if(old_reputation + self.reputation_change == -10)
+            dp.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, status=0)
+
+        return worker_id  # return worker.id, not worker.worker_id
+
     # insert the question mark record to question_record table    
     # update the questioned column in table "message"
     def update_questioned(self):
@@ -155,7 +173,12 @@ class FetchDataWithInput(InOut):
                     chatroom_record.task_id=%d'''%(self.task_id)))
         return self.tuple_to_list(records)
     
-    # fetch 
+    # fetch all_worker_reputation based on worker_id
+    def fetch_all_worker_reputation(self):
+        records = tuple(db.query('''SELECT worker.reputation as reputation, 
+                    worker.worker_id as worker_id from worker, chatroom_record where worker.worker_id = chatroom_record.worker_id and 
+                    chatroom_record.task_id=%d'''%(self.task_id)))
+        return self.tuple_to_list(records) 
     
     
 class FetchDataWithout(object):
@@ -199,5 +222,3 @@ def decrypt_id(test):
         return ids[0]
     except IndexError:
         return None
-    
-   
