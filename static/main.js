@@ -8,6 +8,7 @@
 	var g_worker_id;
 	var g_id_seen = 0;
 	var g_total_reward = 0;
+	var g_reputation = 0;
 	var req_id;
 	var g_task_id;
 	var unique_code;
@@ -45,6 +46,7 @@ function initiate_chatroom(task_id) {
     marking_poll();  // Check for new marking question
     reject_poll();   // Check for new rejecting message
     reward_poll();   // check for new reward
+    reputation_poll(); // check for new reputation
 }
 
 
@@ -406,7 +408,9 @@ function click_message_prompt(mode) {
 			var reward_point = parseInt(button_id.substr(5));
 			reward_point = typeof reward_point == "number" ? reward_point : 10;
 			//update_reward(messid, reward_point);
-			//update_reputation(messid);
+
+			//reputation_change = accepted ? 1 : -1; //pseudocode
+			//update_reputation(messid, reputation_change);
 		});
 	});
 	
@@ -716,7 +720,7 @@ function update_reward(messid, point) {
     	},
 		type: "POST",
 		success: function(data, text_status, jq_xhr) {
-			$("reward_point").val(data.reward_point); //update the banner  
+			//$("reward_point").val(data.reward_point); //update the banner  
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
 			console.log("ERROR SENDING REWARD POINTS:", error_thrown);
@@ -751,6 +755,50 @@ function reward_poll(){
 	});
 }
 
+
+//update current reward point
+function update_reputation(messid, reputation_change) {
+	jQuery.ajax({
+		url: url_for("/new_reputation"),
+		data: { mess_id: messid,
+				task_id: g_task_id,
+				reputation_change: reputation_change
+    	},
+		type: "POST",
+		success: function(data, text_status, jq_xhr) {
+			//$("#reputation-score").val(data.reputation_score); //update the banner  
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+			console.log("ERROR SENDING REPUTATION POINTS:", error_thrown);
+		}
+	});
+}
+
+function reputation_poll(){
+	jQuery.ajax({
+		url: url_for("/update_reputation"),
+		type: "POST",
+		data: { task_id: g_task_id,
+				worker_id: g_worker_id,
+				reputation: g_reputation
+    	},
+		success: function(data, text_status, jq_xhr) {
+			g_reputation = data.results.reputation;
+			
+			if (data.results.worker_id == g_worker_id) {
+				$("#reputation-score").val(g_reputation); //update the banner 
+			}
+			
+            // Check for new reputation updates (again)
+			reputation_poll();
+		},
+		error: function(jq_xhr, text_status, error_thrown) {
+            // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
+			console.log("ERROR FETCHING REPUTATION UPDATE:", error_thrown);
+			setTimeout(reputation_poll, 1000);
+		}
+	});
+}
 
 /*******************************
  * For waiting room
