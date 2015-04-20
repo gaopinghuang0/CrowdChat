@@ -18,7 +18,7 @@ PORT             = 8003
 DEBUG            = False
 
 # Global data structures
-g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward']  # all the events that we are handling
+g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward', 'reputation']  # all the events that we are handling
 # thus, g_messages[0] is used to store global messages, i.e., g_events[0]
 # g_messages[1] is to store global answers, etc
 g_messages = [[] for x in g_events]  
@@ -330,6 +330,64 @@ class UpdateRewardHandler(web.RequestHandler):
         g_waiters[g_events.index('reward')].remove(self._future)
         self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s) 
 
+class NewReputationHandler(web.RequestHandler):
+    def post(self):
+        # Get new message sent by browser and append it to the global pending_message list
+        index = g_events.index('reputation')  # Get the index in the g_events, 5
+        mark_posts = {
+                 'task_id'          : self.get_argument("task_id"),
+                 'mess_id'          : self.get_argument("mess_id"),
+                 'reputation_change': self.get_argument("reputation_change")
+                 }
+        
+        # update the reputation column in table message, and get id
+        worker_id = model.ModifyData(mark_posts).update_reputation()
+        
+        #fetch reputation score of current worker
+        g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_worker_reputation()
+        
+        # Notify all waiting /update requests
+        for future in g_waiters[index]:
+    
+            # Set the result of the Future object yielded by the request's coroutine
+            future.set_result(g_messages[index])
+    
+        # Clear the waiters list
+        g_waiters[index].clear()
+
+class UpdateReputationHandler(web.RequestHandler):
+    @gen.coroutine
+    def post(self):
+        index = g_events.index('reputation')  # Get the index in the g_events, 5
+        reputation = int(self.get_argument("reputation", 0))
+        worker_id = int(self.get_argument("worker_id", 0))
+        worker_reputation = self.fetch_one_reputation(worker_id)
+
+        if reputation == worker_reputation['reputation']:
+            self._future = concurrent.Future() # Create an empty Future object
+            g_waiters[index].add(self._future)                # Add it to the global set of waiters
+            yield self._future                         # WAIT until future.set_result(..) is called
+
+        # If browser is still connected, then send the entire list of messages as JSON
+        if not self.request.connection.stream.closed():
+            self.write({"results": worker_reputation})  # This sets Content-Type header automatically
+    
+    # return {'worker_id':'xadf', 'total_reward': 120} based on g_worker_id
+    def fetch_one_reputation(self, worker_id):
+        index = g_events.index('reputation')  # Get the index in the g_events, 5
+        mark_posts = {}
+        for record in g_messages[index]:
+            if record['worker_id'] == worker_id:
+                mark_posts = record
+                break
+
+        if len(mark_posts) == 0:
+            mark_posts = {'worker_id': "None", "reputation": 0}
+        return mark_posts
+    
+    def on_connection_close(self):     # override tornado.web.RequestHandler.on_connection_close(..)
+        g_waiters[g_events.index('reputation')].remove(self._future)
+        self._future.set_result([])    # Set an empty result to unblock the waiting coroutine(s) 
 
 class NewUserHandler(web.RequestHandler):
     def post(self):
@@ -406,6 +464,8 @@ def main():
           (r"/cast_reject", CastRejectHandler),
           (r"/new_reward",  NewRewardHandler),
           (r"/update_reward", UpdateRewardHandler),
+          (r"/new_reputation", NewReputationHandler),
+          (r"/update_reputation", UpdateReputationHandler),
           (r"/new_user",    NewUserHandler),
           (r"/switch",      SwitchHandler),
           (r"/task",       FetchAllTaskHandler),
