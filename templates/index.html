@@ -14,14 +14,11 @@
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.js"></script>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
 
-	<script type="text/javascript" src="{{ static_url('rooms/chat_room.js') }}"></script>
-	<script type="text/javascript" src="{{ static_url('rooms/waiting_room.js') }}"></script>
-	<script type="text/javascript" src="{{ static_url('systems/reputation.js') }}"></script>
-	<script type="text/javascript" src="{{ static_url('systems/reward.js') }}"></script>
-	<script type="text/javascript" src="{{ static_url('users/requester.js') }}"></script>
-	<script type="text/javascript" src="{{ static_url('users/worker.js') }}"></script>
+
 	<script type="text/javascript" src="{{ static_url('perfect-scrollbar.js') }}"></script>
 	<script type="text/javascript" src="{{ static_url('main.js') }}"></script>
+	
+	
 </head>
 
 <body>
@@ -125,9 +122,7 @@
 	<form id="main_form">
 		<input type="hidden" name="assignmentId" value="{{ infos['assign_id']}}">
 		<input type="hidden" name="workerId" value="{{ infos['worker_id']}}">
-		<input type="hidden" name="reqid" value="{{ records[0]['requester_id']}}">
-		<input type="hidden" name="task_id" value="{{ records[0]['task_id']}}">
-		<input type="hidden" name="uniquecode" value="{{ records[0]['unique_code']}}">
+		
 	</form>
 	
 <!-- Hidden infos that will not be sent to AMT -->
