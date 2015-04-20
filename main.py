@@ -18,7 +18,7 @@ PORT             = 8003
 DEBUG            = False
 
 # Global data structures
-g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward']  # all the events that we are handling
+g_events =  ['messages', 'answers', 'questions', 'rejected', 'reward', 'reputation']  # all the events that we are handling
 # thus, g_messages[0] is used to store global messages, i.e., g_events[0]
 # g_messages[1] is to store global answers, etc
 g_messages = [[] for x in g_events]  
