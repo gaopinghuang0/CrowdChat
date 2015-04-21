@@ -31,6 +31,10 @@ class InOut(object):
     def __init__(self, data):
         self.edit_time =  str(datetime.now())
         for key, value in data.iteritems():
+            try:
+                value = int(value)
+            except:
+                value = value
             if key == 'task_id':
                 setattr(self, key, decrypt_id(value))
             else:
@@ -88,26 +92,27 @@ class ModifyData(InOut):
     # insert into table rating_record
     # and update the rating column in table message          
     def update_reward(self):
-        db.insert('reward_record', task_id=self.task_id, mess_id=self.mess_id, \
-                  temp_reward=self.reward_point, edit_time=self.edit_time)
+
         # fetch old points based on the mess_id
         # add old points and new point
         records = tuple(db.query('''SELECT worker.total_reward as total_reward, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
                     message.id=%d'''%(self.mess_id)))[0]
         old_reward, worker_id = records.total_reward, records.worker_id
+        db.insert('reward_record', worker_id=worker_id, mess_id=self.mess_id, \
+                  record=self.reward_point, edit_time=self.edit_time)
         db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, total_reward=old_reward+self.reward_point)
         return worker_id  # return worker.id, not worker.worker_id
     
     # insert into table reputation_record
     # and update the reputation column in table message          
     def update_reputation(self):
-        db.insert('reputation_record', task_id=self.task_id, mess_id=self.mess_id, \
-                  temp_reputation=self.reputation_change, edit_time=self.edit_time)
         # fetch old points based on the mess_id
         # add old points and new point
         records = tuple(db.query('''SELECT worker.reputation as reputation, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
-                    message.id=%d'''%(self.mess_id)))[0]
+                    message.id=%d'''%(int(self.mess_id))))[0]
         old_reputation, worker_id = records.reputation, records.worker_id
+        db.insert('reputation_record', worker_id=worker_id, mess_id=self.mess_id, \
+                  record=self.reputation_change, edit_time=self.edit_time)
         db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, reputation=old_reputation+self.reputation_change)
         
         #set status of worker to be 0 if he or she has a reputation of -10
@@ -127,6 +132,10 @@ class ModifyData(InOut):
     def update_rejected(self):
         # db.insert(), add later
         db.update('message', where="id=$id", vars={'id':self.mess_id}, rejected=self.rejected)
+        
+    def initiate_worker_record(self):
+        # try to update if exists
+        db.query("INSERT OR IGNORE INTO worker(worker_id, edit_time) VALUES('%s', '%s')" %(self.worker_id, self.edit_time))
 
 class FetchDataWithInput(InOut):
     

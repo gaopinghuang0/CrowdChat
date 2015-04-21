@@ -255,3 +255,18 @@ li.pending:hover .prompt_content {opacity:1;}
 	border:1px solid green;
 	border-radius:6px;
 }
+.user img{
+	width: 20px;
+  	padding-top: 1px;
+  	margin-left: 2px;
+	
+}
+.wait_right{
+	
+	width:85%;
+	
+}
+.wait_left{
+	
+	width:14%;
+}

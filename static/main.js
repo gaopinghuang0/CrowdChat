@@ -14,15 +14,14 @@
 	var unique_code;
 	var g_url_prefix = '';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
-
+	var in_room = 0;
 
 jQuery(document).ready(function() {
 	//initiate_chatroom(1);   // for test, task_id is set to 1
 	//document.getElementById("1").click = return_clicked_id("1");
 	initiate_task_list();
 	count_user_handler();
-	add_new_ids();
-
+	//add_new_ids();
 });
 
 function initiate_chatroom(task_id) {
@@ -39,18 +38,20 @@ function initiate_chatroom(task_id) {
 		var worknum = g_worker_id == 'BBB' ? 1:2;
 		$("#roommode").text('(worker'+worknum+')');
 	}
-    count_user_handler();
     add_new_ids(); 
     console.log(g_worker_id);
-    poll();  // Check for new messages
-    answer_poll(); // Check for new answer messages
-    // rating_poll();  // Check for new ratings
-    marking_poll();  // Check for new marking question
-    reject_poll();   // Check for new rejecting message
-    reward_poll();   // check for new reward
-    reputation_poll(); // check for new reputation
+    
+    if(in_room == 1){
+    	alert('in room')
+    	poll();  // Check for new messages
+    	answer_poll(); // Check for new answer messages
+    	marking_poll();  // Check for new marking question
+    	reject_poll();   // Check for new rejecting message
+    
+    	reward_poll();   // check for new reward
+  //  	reputation_poll(); // check for new reputation
+    }
 }
-
 
 
 
@@ -58,7 +59,6 @@ function handle_new_message_event(evt) {
     if(evt.which == 13) {  // only respond to enter key
         // Tell browser (via jQuery) not to try to submit the form the normal way
         evt.preventDefault();
-
         // Prevent user from typing more messages until last one is processed
         var message_input = document.getElementById("message_input");
         message_input.disabled = true;   // Disable text box
@@ -141,12 +141,13 @@ function poll() {
 			g_num_seen = data.messages.length;
 			
             // Check for new messages (again)
-            poll();
+            if (in_room){
+            	poll();
+           	}
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(poll, 1000);
 		}
 	});
 	
@@ -189,12 +190,13 @@ function answer_poll() {
 			/* Update the number of total answer */
 			$('.answered_count').text(g_answer_num);			
             // Check for new messages (again)
-			answer_poll();
+			if(in_room){
+				answer_poll();
+			}
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(answer_poll, 1000);
 		}
 	});
 }
@@ -255,12 +257,13 @@ function marking_poll() {
 			/* Update the number of agreed pending */
 			$('.total_count').text(g_questioned_num);
             /* Check for new ratings (again) */
-			marking_poll();
+			if(in_room){
+				marking_poll();
+			}
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(marking_poll, 1000);
 		}
 	});
 }
@@ -295,12 +298,13 @@ function reject_poll() {
 			g_rejected_num = data.rejected.length;
 
             /* Check for new ratings (again) */
-			reject_poll();
+			if(in_room){
+				reject_poll();
+			}
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
-			setTimeout(reject_poll, 1000);
 		}
 	});
 }
@@ -373,7 +377,7 @@ function click_message_prompt(mode) {
 			console.log(messid);
 			var reward_point = parseInt(button_id.substr(5));
 			reward_point = typeof reward_point == "number" ? reward_point : 10;
-			//update_reward(messid, reward_point);
+			update_reward(messid, reward_point);
 
 			//reputation_change = accepted ? 1 : -1; //pseudocode
 			//update_reputation(messid, reputation_change);
@@ -698,28 +702,32 @@ function update_reward(messid, point) {
 }
 
 function reward_poll(){
+	console.log("in reward");
+	console.log(g_task_id,g_worker_id,g_total_reward);
 	jQuery.ajax({
 		url: url_for("/update_reward"),
 		type: "POST",
-		data: { task_id: g_task_id,
+		data: { 
 				worker_id: g_worker_id,
 				total_reward: g_total_reward
     	},
 		success: function(data, text_status, jq_xhr) {
+			console.log(data.results);
 
 			g_total_reward = data.results.total_reward;
 			
 			if (data.results.worker_id == g_worker_id) {
-				$("#reward_point").text(g_total_reward); //update the banner 
+				$("#reward-point").text(g_total_reward); //update the banner 
 			}
 			
             // Check for new reward updates (again)
-			reward_poll();
+			if(in_room){
+				reward_poll();
+			}
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING REWARD UPDATE:", error_thrown);
-			setTimeout(reward_poll, 1000);
 		}
 	});
 }
@@ -730,7 +738,6 @@ function update_reputation(messid, reputation_change) {
 	jQuery.ajax({
 		url: url_for("/new_reputation"),
 		data: { mess_id: messid,
-				task_id: g_task_id,
 				reputation_change: reputation_change
     	},
 		type: "POST",
@@ -747,7 +754,7 @@ function reputation_poll(){
 	jQuery.ajax({
 		url: url_for("/update_reputation"),
 		type: "POST",
-		data: { task_id: g_task_id,
+		data: { 
 				worker_id: g_worker_id,
 				reputation: g_reputation
     	},
@@ -755,16 +762,16 @@ function reputation_poll(){
 			g_reputation = data.results.reputation;
 			
 			if (data.results.worker_id == g_worker_id) {
-				$("#reputation-score").val(g_reputation); //update the banner 
+				$("#reputation-score").text(g_reputation); //update the banner 
 			}
 			
             // Check for new reputation updates (again)
+			
 			reputation_poll();
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING REPUTATION UPDATE:", error_thrown);
-			setTimeout(reputation_poll, 1000);
 		}
 	});
 }
@@ -796,7 +803,9 @@ function count_user_handler(){
 			console.log(g_id_seen, id.length);
 			console.log(g_worker_id);
 			//check for new users 
-			count_user_handler();	
+			if(!in_room){
+			count_user_handler();
+			}
 		},
 		
 	});
@@ -809,7 +818,9 @@ function add_new_ids(){
 		type:"POST",
 		data: {ids: g_worker_id},
 		success:function(){
+			if(!in_room){
 			setTimeout(add_new_ids,5000);
+			}
 			},
 	});
 }
@@ -831,6 +842,7 @@ function initiate_task_list(){
 			}
 			document.getElementById("task_number_display").innerHTML = html_parts.join("");
 			switch_handler();
+			switch_back_handler();
 		},
 		
 	});
@@ -842,8 +854,8 @@ function switch_handler(){
 	$(".enter_chat").click(function(){
 		console.log("clicked");
 		var task_id = $(this).attr('id');
-		var worker_id = 1; 
-		var in_room = 1;
+		var worker_id = g_worker_id; 
+		in_room = 1;
 		document.getElementById("waiting_room").style.display = "none";
 		document.getElementById("chatroom_container").style.display = "block";
 		$.ajax({
@@ -855,13 +867,24 @@ function switch_handler(){
 	});
 }
 
+function switch_back_handler(){
+	$("#go_back_button").click(function(){
+		in_room = 0;
+		document.getElementById("waiting_room").style.display = "block";
+		document.getElementById("chatroom_container").style.display = "none";
+		
+	});
+	
+	
+}
+
 function on_success_switch_chatroom(data){
 	
-	console.log(data.records[0]);
-	console.log(set_all_ids(data));
+	//console.log(data.records[0]);
+	//console.log(set_all_ids(data));
 	if (set_all_ids(data) != false){
 		var task_id = g_task_id;
-		console.log(task_id);
+		//console.log(task_id);
 		initiate_chatroom(task_id);
 	}
 }

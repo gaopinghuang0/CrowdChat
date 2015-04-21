@@ -58,11 +58,12 @@ class SwitchHandler(web.RequestHandler):
                 'worker_id'     :   self.get_argument("worker_id"),
                 'in_room'       :   self.get_argument("in_room"),
                 }
-        
+        model.ModifyData(data).initiate_worker_record()
         model.ModifyData(data).insert_switch_chatroom_data()
         ##
         
         records = self.initiate_g_records(data["task_id"])
+        
         self.write({"records":records})
         
     def initiate_g_records(self, task_id):
@@ -87,6 +88,7 @@ class SwitchHandler(web.RequestHandler):
 class NewHandler(web.RequestHandler):
     def post(self):
         index = g_events.index('messages')  # Get the index in the g_events, 0
+        print "in newhandler"
         # Get new message sent by browser and append it to the global message list
         posts = {
                  'message'     : self.get_argument("message"),
@@ -106,7 +108,6 @@ class NewHandler(web.RequestHandler):
 
             # Set the result of the Future object yielded by the request's coroutine
             future.set_result(g_messages[index])
-
         # Clear the waiters list
         g_waiters[index].clear()
 
@@ -307,7 +308,7 @@ class UpdateRewardHandler(web.RequestHandler):
             self._future = concurrent.Future() # Create an empty Future object
             g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
-
+        print g_messages[index], worker_reward
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
             self.write({"results": worker_reward})  # This sets Content-Type header automatically
@@ -418,10 +419,8 @@ class UpdateUserHandler(web.RequestHandler):
     def post(self):
         #Get num_seen so far
         num_seen = int(self.get_argument("num_seen"))
-        
-        print 'num_see', num_seen
+
         if num_seen == len(g_waitroom["g_worker"]):
-            print "in here"
             self._future = concurrent.Future()
             g_waitroom_set.add(self._future)
             yield self._future
