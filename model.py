@@ -187,14 +187,24 @@ class FetchDataWithout(object):
     
     def fetch_task_by_id(self, task_id):
         tasks = tuple(db.select('task',
-                                where="task_id=$task_id",
+                                where="id=$task_id",
                                 vars={"task_id":task_id}
                                   ))
         return self.append_task_info(tasks)
     
     def fetch_all_task(self):
         tasks = tuple(db.query('''SELECT id, text from task '''  ))
-        return self.append_task_info(tasks)
+        records = []
+        for task in tasks:
+            task_id = task.id
+            task_text = task.text
+            record = {
+                      "task_id"       : encrypt_id(task_id),
+                      "text"          : task_text,
+                      "unique_code"   : generate_unique_code()
+                      }
+            records.append(record)
+        return InOut({}).tuple_to_list(records)
     
     def append_task_info(self, tasks):
         records = []

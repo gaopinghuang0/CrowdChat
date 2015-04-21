@@ -5,7 +5,7 @@
 	var g_answer_num = 0;
 	var g_questioned_num = 0;  
 	var g_rejected_num = 0;
-	var g_worker_id;
+	var g_worker_id = get_all_ids().worker_id;
 	var g_id_seen = 0;
 	var g_total_reward = 0;
 	var g_reputation = 0;
@@ -17,9 +17,13 @@
 
 
 jQuery(document).ready(function() {
-	initiate_chatroom(1);   // for test, task_id is set to 1
-});
+	//initiate_chatroom(1);   // for test, task_id is set to 1
+	//document.getElementById("1").click = return_clicked_id("1");
+	initiate_task_list();
+	count_user_handler();
+	add_new_ids();
 
+});
 
 function initiate_chatroom(task_id) {
     $("#message_input").on("keypress", handle_new_message_event);
@@ -39,7 +43,6 @@ function initiate_chatroom(task_id) {
     count_user_handler();
     add_new_ids(); 
     console.log(g_worker_id);
-	
     poll();  // Check for new messages
     answer_poll(); // Check for new answer messages
     // rating_poll();  // Check for new ratings
@@ -48,6 +51,8 @@ function initiate_chatroom(task_id) {
     reward_poll();   // check for new reward
     reputation_poll(); // check for new reputation
 }
+
+
 
 
 function handle_new_message_event(evt) {
@@ -850,50 +855,51 @@ function add_new_ids(){
 /// initiate task list. Fetch task id from task and use javascript to create task list
 function initiate_task_list(){
 	$.ajax({
-		url:"/task",
+		url:url_for("/task"),
 		type:"POST",
 		success : function(data){
 			var html_parts = [];
-			var task = data.tasks;
+			var tasks = data.tasks;
 			for(var i =0; i < data.tasks.length; i++){
-                html = '<div class="task" id=' + i + '>' + '  ' + tasks[i].text + '<input type="button" id='+tasks[i].id+' name="enter">'+' onClick="return_clicked_id(this.id)" </div>';
-				html_parts.push(html);
+				html = '<div class="task">'  + tasks[i].text + '<input type="button" class="enter_chat" id="'+tasks[i].task_id+'" value="enter"> </div>';
+				
+				html_parts.push(html);	
 			}
 			document.getElementById("task_number_display").innerHTML = html_parts.join("");
-			
-			
+			switch_handler();
 		},
 		
 	});
 	
 }
-/// when worker click on button
-function return_clicked_id(clicked_id){
-	
-		var task_id = clicked_id 
-		var worker_id = g_worker_id; 
-		var in_room = 1;
-/// switch to chatroom
-		document.getElementById("waiting_room").style.display = "none";
-		document.getElementById("chatroom_containter").style.display = "block";
-		$.ajax({
-			url:"/switch",
-			type:"POST",
-			data: {task_id:task_id, worker_id:worker_id,in_room = in_room },
-			success: on_success_switch_chatroom
-			
-			
-		});
-		
-	}
-	
-	
 
+	
+function switch_handler(){
+	$(".enter_chat").click(function(){
+		console.log("clicked");
+		var task_id = $(this).attr('id');
+		var worker_id = 1; 
+		var in_room = 1;
+		document.getElementById("waiting_room").style.display = "none";
+		document.getElementById("chatroom_container").style.display = "block";
+		$.ajax({
+			url:url_for("/switch"),
+			type:"POST",
+			data: {task_id:task_id, worker_id:worker_id,in_room : in_room },
+			success:on_success_switch_chatroom
+		});
+	});
+}
 
 function on_success_switch_chatroom(data){
 	// data = results
-	set_all_ids(data);
+	if (set_all_ids(data) != false){
+		var task_id = g_task_id;
+		initiate_chatroom(task_id);
+	}
 }
+
+
 
 
 

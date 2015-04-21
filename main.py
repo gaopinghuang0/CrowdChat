@@ -25,7 +25,7 @@ g_messages = [[] for x in g_events]
 # similarly, g_waiters[0] is used to store set of Future objects for 'messages', corresponding to g_events[0]
 g_waiters = [set() for x in g_events]
 # g_waitroom['g_worker'] stores old list
-# g_waitroom['g_worker_compare'] stores recent worker_id list
+# g_waitroom['g_worker_compare'] stores recent worker_id lisst
 g_waitroom = {"g_worker":list(),"g_worker_compare":list()}
 # g_waitroom_set 
 g_waitroom_set = set()
@@ -36,9 +36,9 @@ class MainHandler(web.RequestHandler):
     def get(self):
         infos = {
                  'worker_id': self.get_argument('workerId', 'AAA'),
-                 'assign_id': self.get_argument('assignmentId'),
-                 'hit_id': self.get_argument('hitId'),
-                 'turkSubmitTo': self.get_argument('turkSubmitTo')
+                 'assign_id': self.get_argument('assignmentId','bbb'),
+                 'hit_id': self.get_argument('hitId','vvv'),
+                 'turkSubmitTo': self.get_argument('turkSubmitTo','ddd'),
                  }
 
         # Serve index.html blank.  It will fetch new messages upon loading.
@@ -61,7 +61,7 @@ class SwitchHandler(web.RequestHandler):
                 'in_room'       :   self.get_argument("in_room"),
                 }
         
-        model.ModifyData(data).insert_switch_chatrooom_data()
+        model.ModifyData(data).insert_switch_chatroom_data()
         ##
         
         records = self.initiate_g_records(data["task_id"])
