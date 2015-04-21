@@ -32,7 +32,6 @@ function initiate_chatroom(task_id) {
 	$("#message_input").select();
 	g_worker_id = get_all_ids().worker_id;
 	req_id = get_all_ids().req_id;
-	g_task_id = task_id;
 	unique_code = get_all_ids().unique_code;
 	if (req_id == g_worker_id) {
 		$("#roommode").text('(requester)');
@@ -199,44 +198,6 @@ function answer_poll() {
 		}
 	});
 }
-
-//
-//function rating_poll() {
-//	jQuery.ajax({
-//		url: url_for("/cast_rate"),
-//		type: "POST",
-//		data: {agreed_num: g_agreed_num},
-//		success: function(data, text_status, jq_xhr) {
-//			var agreed_parts = [];
-//			for (var i = 0; i < data.ratings.length; i++) {
-//				var this_id = 'pmessid' + data.ratings[i].id;
-//				agreed_parts.push(this_id);
-//			}
-//			$("#candidates_container ul").each(function(){
-//				$(this).find('.pending').each(function(){
-//					var curr = $(this);
-//					curr_id = curr.attr("id");
-//					if (agreed_parts.indexOf(curr_id) >= 0) {
-//						curr.addClass('agreed');
-//					} else {
-//						curr.removeClass('agreed');
-//					}
-//				});
-//			});
-//            /* Record the number of total agreed */
-//			g_agreed_num = data.ratings.length;
-//			/* Update the number of agreed pending */
-//			$('.answered_count').text(g_agreed_num);
-//            /* Check for new ratings (again) */
-//			rating_poll();
-//		},
-//		error: function(jq_xhr, text_status, error_thrown) {
-//            /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
-//			console.log("ERROR FETCHING UPDATE:", error_thrown);
-//			setTimeout(rating_poll, 1000);
-//		}
-//	});
-//}
 
 /*
  * Handler for popup mode
@@ -598,28 +559,6 @@ function scroll_to_view(flag) {
 	}
 }
 
-
-/*
- * requester rate_pending_handler
- */ 
-//function rate_pending_handler() {
-//	if (g_worker_id == req_id) {  /* only requester can rate */
-//		$(".pending").on('click', function(){
-//			var mess_id = $(this).attr('id').slice(7);
-//			var rating = ($(this).hasClass('agreed')) ? 0 : 1;
-//			$.ajax({
-//				url:"/rate",
-//				type: "POST",
-//				data: {
-//					mess_id    : mess_id,
-//					task_id    : g_task_id,
-//					rating     : rating,
-//				}
-//			});
-//		});
-//	}
-//}
-
 /**
  * Module to get all constant ids,
  * not for changable id
@@ -664,27 +603,52 @@ function get_all_ids() {
 /*
  * Set all ids using data from ajax
  */
-function set_all_ids(key, value){
-	function set_id_by_name(name, value){
+function set_all_ids(data){
+	
+	var record = data.records[0]; // contain only one record
+	var text = record.text,
+		req_id = record.requester_id,
+		unique_code = record.unique_code,
+		task_id = record.task_id;
+	g_task_id = task_id;  // update global task_id
+
+	return set_value_by_name("reqid", req_id) &&
+			set_value_by_name("task_id", task_id) &&
+			set_value_by_name("uniquecode", unique_code) &&
+			set_value_by_id("task_text", text);
+	
+	function set_value_by_name(name, value){
 		var name = 'input[name=' + name + ']';
 		var obj = $(name);
-		// obj.val() will never be false
-		return obj.length > 0 ? obj.val(value) : false;
+		if (obj.length > 0) {
+			obj.val(value);
+			obj.text(value);
+			return true;
+		}
+		return false;
 	}
 	
-	function set_id_by_class(classname, value){
+	function set_value_by_class(classname, value){
+		if (id.indexOf("#") != 0) classname = "."+classname;
 		var obj = $(classname);
-		return obj.length > 0 ? obj.val(value) : false;
+		if (obj.length > 0) {
+			obj.val(value);
+			obj.text(value);
+			return true;
+		}
+		return false;
 	}
 	
-	function set_id_by_id(id, value){
+	function set_value_by_id(id, value){
+		if (id.indexOf("#") != 0) id = "#"+id;
 		var obj = $(id);
-		return obj.length > 0 ? obj.val(value) : false;
+		if (obj.length > 0) {
+			obj.val(value);
+			obj.text(value);
+			return true;
+		}
+		return false;
 	}
-	
-	// return false if not exists, return jQuery object if success
-	// jQuery object won't equal to false
-	return set_id_by_name(key, value);
 }
 
 function url_for(url) {
@@ -892,9 +856,12 @@ function switch_handler(){
 }
 
 function on_success_switch_chatroom(data){
-	// data = results
+	
+	console.log(data.records[0]);
+	console.log(set_all_ids(data));
 	if (set_all_ids(data) != false){
 		var task_id = g_task_id;
+		console.log(task_id);
 		initiate_chatroom(task_id);
 	}
 }

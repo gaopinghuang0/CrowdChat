@@ -65,7 +65,7 @@
 <div id="chatroom_container" style="display:none;">
 	<!-- For question and instruction -->
 	<div class="up">
-		<div class="question"><h1>Help me find my real need of a cellphone</h1></div>
+		<div class="question"><h1>Help me find real <span id="task_text"></span></h1></div>
 		<div class="requirement"></div>
 		<div class="instruction">
 		<ol>
@@ -122,13 +122,15 @@
 	<form id="main_form">
 		<input type="hidden" name="assignmentId" value="{{ infos['assign_id']}}">
 		<input type="hidden" name="workerId" value="{{ infos['worker_id']}}">
-		
+		<input type="hidden" name="task_id">
+		<input type="hidden" name="uniquecode">
 	</form>
 	
 <!-- Hidden infos that will not be sent to AMT -->
 	<div class="hidden_infos">
 		<input type="hidden" name="hitId" value="{{infos['hit_id']}}">	
 		<input type="hidden" name="turkSubmitTo" value="{{infos['turkSubmitTo']}}">	
+		<input type="hidden" name="reqid">
 	</div>
 </body>
 </html>

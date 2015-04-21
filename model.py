@@ -111,7 +111,7 @@ class ModifyData(InOut):
         db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, reputation=old_reputation+self.reputation_change)
         
         #set status of worker to be 0 if he or she has a reputation of -10
-        if(old_reputation + self.reputation_change == -10)
+        if (old_reputation + self.reputation_change) == -10:
             dp.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, status=0)
 
         return worker_id  # return worker.id, not worker.worker_id
@@ -188,7 +188,7 @@ class FetchDataWithout(object):
     def fetch_task_by_id(self, task_id):
         tasks = tuple(db.select('task',
                                 where="id=$task_id",
-                                vars={"task_id":task_id}
+                                vars={"task_id":decrypt_id(task_id)}
                                   ))
         return self.append_task_info(tasks)
     

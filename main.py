@@ -50,8 +50,6 @@ class FetchAllTaskHandler(web.RequestHandler):
         tasks = model.FetchDataWithout().fetch_all_task()
         self.write({"tasks":tasks})
 
-        
-
 class SwitchHandler(web.RequestHandler):
     def post(self):
         #Data from ajax: when trigger,
@@ -65,7 +63,7 @@ class SwitchHandler(web.RequestHandler):
         ##
         
         records = self.initiate_g_records(data["task_id"])
-        return records
+        self.write({"records":records})
         
     def initiate_g_records(self, task_id):
         records = model.FetchDataWithout().fetch_task_by_id(task_id)
@@ -360,7 +358,7 @@ class UpdateReputationHandler(web.RequestHandler):
     def post(self):
         index = g_events.index('reputation')  # Get the index in the g_events, 5
         reputation = int(self.get_argument("reputation", 0))
-        worker_id = int(self.get_argument("worker_id", 0))
+        worker_id = self.get_argument("worker_id", 0)
         worker_reputation = self.fetch_one_reputation(worker_id)
 
         if reputation == worker_reputation['reputation']:
