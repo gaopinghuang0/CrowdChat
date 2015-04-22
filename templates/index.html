@@ -43,9 +43,9 @@
 		<div class="question"><h1>Worker waiting room</h1></div>
 		<div class="instruction">
 		<ol>
-		<li>This is a worker waiting room</li>
-		<li>Left column is existing workers waiting list</li>
-		<li>Right column is existing task, workers can pick their favoriate task</li>
+		<li>This is a worker waiting room.</li>
+		<li>Left column is a list of workers who are waiting in the room.</li>
+		<li>Right column is a list of availabe tasks that you can choose to start with.</li>
 		</ol>
 		</div>
 	</div>
@@ -70,12 +70,14 @@
 		<div class="instruction">
 		<ol>
 		<li>Chat in the ChatRoom (left) and ask inspiring questions</li>
-		<li>Click on the reasonable chat messages to push them to Pending (right)</li>
-		<li>Requester will handle the Pending messages 
-		(<span style="color:orange">orange</span>:pending, <span style="color:#0f0">green</span>:agreed)</li>
+		<li>Worker can any message as question if you think it needs requester to answer it.</li>
+		<li>Once requester answered one question, the question-answer pair will be copied to the right column. 
+    <li>Requester can reject any improper messages or give reward point to any good message.</li>
+    <li>Worker's total reward point is shown on the top-right(<img id="instr-reward-pic" src="./static/reward.png" alt="Reward Picture">). Every 10 reward point equal to $0.01.</li>
+		</li>
 		</ol>
 		</div>
-		<input type="button" value="Go back" id="go_back_button">
+		<input type="button" value="Go back" class="common_button" id="go_back_button">
 	</div>
 	
 	<div class="left">
@@ -125,6 +127,7 @@
 		<input type="hidden" name="workerId" value="{{ infos['worker_id']}}">
 		<input type="hidden" name="task_id">
 		<input type="hidden" name="uniquecode">
+    <input type="submit" name="checkout" value="Check out">
 	</form>
 	
 <!-- Hidden infos that will not be sent to AMT -->

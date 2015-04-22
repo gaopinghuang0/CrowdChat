@@ -24,6 +24,18 @@ h1, h2, h3, h4, h5, h6 {
 	width:700px;
 }
 
+#instr-reward-pic {
+	width: 30px;
+	height: 30px;
+	margin-bottom: -10px;
+}
+
+.common_button {
+	font-size:20px;
+	padding:3px;
+	cursor:pointer;
+}
+
 .left {
 	float:left;
 	width:580px;
