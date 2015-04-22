@@ -368,7 +368,6 @@ function click_message_prompt(mode) {
 	
 	/* give reward to one message */
 	$(".give_reward").on('click',function(){
-		// $(".give_reward").off('click');
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		// show the options of reward
@@ -376,7 +375,7 @@ function click_message_prompt(mode) {
 		stick_pop('.reward_options', $(this), $('#messages_display'));
 		// reward click handler
 		$(".reward_button").on('click',function(){
-			// $(".reward_button").off('click');
+			$(".reward_button").off('click');
 			var button_id = $(this).attr('id');
 			console.log(button_id);
 			var messid = obj.attr("messid");
@@ -703,7 +702,7 @@ function update_reward(messid, point) {
     	},
 		type: "POST",
 		success: function(data, text_status, jq_xhr) {
-			//$("reward_point").val(data.reward_point); //update the banner  
+			alert("return");
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
 			console.log("ERROR SENDING REWARD POINTS:", error_thrown);
