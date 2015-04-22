@@ -109,7 +109,7 @@ function poll() {
 				
 				if (each_worker_id == g_worker_id) {  // it's me
 					html = '<li class="message mymess"><span messid="'+each_id+'">' + html + '</span>'+
-					'<div class="head_img"><img src="./static/images/head.jpg" alt="worker"></div></li>';
+					'<div class="head_img"><img src="./static/head.jpg" alt="worker"></div></li>';
 				}
 				else {  // others' message
 					if (each_worker_id == req_id)  {  // requster's mess
@@ -118,7 +118,7 @@ function poll() {
 					}
 					else {  // other workers' message
 						html = '<li class="message othersmess">'+
-							'<div class="head_img"><img src="./static/images/head.jpg"alt="worker"></div>' +
+							'<div class="head_img"><img src="./static/head.jpg"alt="worker"></div>' +
 							'<span messid="'+each_id+'" title="click to show options">' +
 							html + '</span></li>';
 					}
@@ -804,7 +804,7 @@ function count_user_handler(){
 			var html_parts = [];
 			var id = data.data.g_ids;
 			for(var i =0; i < id.length; i++){
-				img = '<img src="/static/images/head.jpg" >';
+				img = '<img src="./static/head.jpg" >';
                 html = '<div class="user">' + img + '  ' + id[i] + '</div>';
 				html_parts.push(html);
 			}
