@@ -86,6 +86,14 @@ class SwitchHandler(web.RequestHandler):
 		g_messages[g_events.index('reward')] = fetches.fetch_all_worker_reward()
 		return records
 
+class SwitchBackHandler(web.RequestHandler):
+	def post(self):
+		# set g_messages to all corresponding g_waiters
+		# then clear all g_waiters
+		for ind, value in enumerate(g_events):
+			for future in g_waiters[ind]:
+				future.set_result(g_messages[ind])
+			g_waiters[ind].clear()
 
 class NewHandler(web.RequestHandler):
 	def post(self):
@@ -469,6 +477,7 @@ def main():
 		  ((URL_PREFIX+r"/update_reputation"), UpdateReputationHandler),
 		  ((URL_PREFIX+r"/new_user"),	 NewUserHandler),
 		  ((URL_PREFIX+r"/switch"),		 SwitchHandler),
+		  ((URL_PREFIX+r"/switch_back"),		 SwitchBackHandler),
 		  ((URL_PREFIX+r"/task"),		FetchAllTaskHandler),
 		  ((URL_PREFIX+r'/static/(.*)'), web.StaticFileHandler, {'path': static_path}),
 		  ((URL_PREFIX+r"/update_user"), UpdateUserHandler),],
