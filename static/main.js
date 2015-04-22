@@ -867,7 +867,7 @@ function initiate_task_list(){
 			var html_parts = [];
 			var tasks = data.tasks;
 			for(var i =0; i < data.tasks.length; i++){
-				html = '<div class="task">'  + tasks[i].text + '<input type="button" class="enter_chat" id="'+tasks[i].task_id+'" value="enter"> </div>';
+				html = '<div class="task">'  + tasks[i].text + ' <input type="button" class="enter_chat small_button" id="'+tasks[i].task_id+'" value="enter &#10143"> </div>';
 				
 				html_parts.push(html);	
 			}
