@@ -364,6 +364,9 @@ function click_message_prompt(mode) {
 		if (!obj.hasClass('rejected') && !obj.parent().hasClass("reqmess")) {  
 			popup_mess_handler(obj, 'questioned');
 			button_set_color(obj, 'questioned', '.mark_question', 1);
+		} else {
+			alert("You cannot mark rejected or requester message");
+			return false;
 		}
 	});
 	
@@ -372,6 +375,10 @@ function click_message_prompt(mode) {
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		// show the options of reward
+		if (obj.hasClass('.rejected')) {
+			alert("You cannot give reward to rejected message");
+			return false;
+		}
 		$(".reward_options").css("display","block");
 		stick_pop('.reward_options', $(this), $('#messages_display'));
 		// reward click handler
@@ -437,6 +444,9 @@ function click_message_prompt(mode) {
 					}
 				}
 			});	
+		} else {
+			alert("you cannot answer rejected answer");
+			return false;
 		}
 	});
 	
@@ -889,19 +899,28 @@ function switch_handler(){
 function switch_back_handler(){
 	$("#go_back_button").click(function(){
 		in_room = 0;
-		add_new_ids();
-		count_user_handler();
+		initiate_ajax_switch_back();
 		document.getElementById("waiting_room").style.display = "block";
 		document.getElementById("chatroom_container").style.display = "none";
 		document.getElementById("banner-block").style.display = "none";	
+
+	});
+
+	function initiate_ajax_switch_back(){
 		// cancel all current waiters
 		$.ajax({
 			url: url_for("switch_back"),
 			type:"POST",
-			data:{ task_id:g_task_id}
-			success: 
+			data:{ task_id:g_task_id},
+			success:function(data, text_status, jq_xhr) {
+				if (data.data == 'success') {
+					alert("back");
+				}
+				add_new_ids();
+				count_user_handler();
+			}
 		});	
-	});
+	}
 }
 
 function on_success_switch_chatroom(data){

@@ -89,10 +89,13 @@ class SwitchBackHandler(web.RequestHandler):
 	def post(self):
 		# set g_messages to all corresponding g_waiters
 		# then clear all g_waiters
+		print 'in switch back handler'
 		for ind, value in enumerate(g_events):
 			for future in g_waiters[ind]:
 				future.set_result(g_messages[ind])
 			g_waiters[ind].clear()
+
+		self.write({"data": 'success'})
 
 class NewHandler(web.RequestHandler):
 	def post(self):
