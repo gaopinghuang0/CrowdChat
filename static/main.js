@@ -12,7 +12,7 @@
 	var req_id ;
 	var g_task_id;
 	var unique_code;
-	var g_url_prefix = '/03';  // "" means localhost, /03 means 03 port
+	var g_url_prefix = '/10';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
 	var in_room = 0;
 	var g_mode;
@@ -804,17 +804,16 @@ function count_user_handler(){
 			var html_parts = [];
 			var id = data.data.g_ids;
 			for(var i =0; i < id.length; i++){
-				
 				img = '<img src="./static/head.jpg" >';
 				if(id[i] == g_worker_id){
-					html = '<div class="user">' + img + '  ' + id[i] + 'me' +'</div>';
+					html = '<div class="user">' + img +'&nbsp'+ 'Me' +'</div>';
 						}
 				else{
 						html = '<div class="user">' + img + '  ' + id[i] +'</div>';
 						}
 				html_parts.push(html);
 				}
-			}
+			
 			document.getElementById("user_number_display").innerHTML = html_parts.join("");
 			//record the number of workers
 			g_id_seen = id.length;
@@ -871,6 +870,7 @@ function initiate_task_list(){
 	
 function switch_handler(){
 	$(".enter_chat").click(function(){
+		document.getElementById("banner-block").style.display = "block";
 		console.log("clicked");
 		var task_id = $(this).attr('id');
 		var worker_id = g_worker_id; 
@@ -893,7 +893,7 @@ function switch_back_handler(){
 		count_user_handler();
 		document.getElementById("waiting_room").style.display = "block";
 		document.getElementById("chatroom_container").style.display = "none";
-		
+		document.getElementById("banner-block").style.display = "none";	
 	});
 	
 	
