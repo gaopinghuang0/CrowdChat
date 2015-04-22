@@ -304,11 +304,12 @@ class UpdateRewardHandler(web.RequestHandler):
         total_reward = int(self.get_argument("total_reward", 0))
         worker_id = self.get_argument("worker_id", 0)
         worker_reward = self.fetch_one_reward(worker_id)
+        print g_messages[index], worker_reward
         if total_reward == worker_reward['total_reward']:
             self._future = concurrent.Future() # Create an empty Future object
             g_waiters[index].add(self._future)                # Add it to the global set of waiters
             yield self._future                         # WAIT until future.set_result(..) is called
-        print g_messages[index], worker_reward
+
         # If browser is still connected, then send the entire list of messages as JSON
         if not self.request.connection.stream.closed():
             self.write({"results": worker_reward})  # This sets Content-Type header automatically

@@ -9,19 +9,21 @@
 	var g_id_seen = 0;
 	var g_total_reward = 0;
 	var g_reputation = 0;
-	var req_id;
+	var req_id ;
 	var g_task_id;
 	var unique_code;
 	var g_url_prefix = '';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
 	var in_room = 0;
+	var g_mode;
 
 jQuery(document).ready(function() {
 	//initiate_chatroom(1);   // for test, task_id is set to 1
 	//document.getElementById("1").click = return_clicked_id("1");
-	initiate_task_list();
-	count_user_handler();
-	//add_new_ids();
+		g_worker_id = get_all_ids().worker_id;	
+		initiate_task_list();
+		count_user_handler();
+		add_new_ids();
 });
 
 function initiate_chatroom(task_id) {
@@ -29,7 +31,6 @@ function initiate_chatroom(task_id) {
 	$("#messages_display").perfectScrollbar();
 	$("#candidates_container").perfectScrollbar();
 	$("#message_input").select();
-	g_worker_id = get_all_ids().worker_id;
 	req_id = get_all_ids().req_id;
 	unique_code = get_all_ids().unique_code;
 	if (req_id == g_worker_id) {
@@ -38,11 +39,9 @@ function initiate_chatroom(task_id) {
 		var worknum = g_worker_id == 'BBB' ? 1:2;
 		$("#roommode").text('(worker'+worknum+')');
 	}
-    add_new_ids(); 
     console.log(g_worker_id);
     
     if(in_room == 1){
-    	alert('in room')
     	poll();  // Check for new messages
     	answer_poll(); // Check for new answer messages
     	marking_poll();  // Check for new marking question
@@ -51,6 +50,9 @@ function initiate_chatroom(task_id) {
     	reward_poll();   // check for new reward
   //  	reputation_poll(); // check for new reputation
     }
+    
+    g_mode = (g_worker_id == req_id) ? '.pop2' : '.pop1';
+    click_message_prompt(g_mode)
 }
 
 
@@ -131,11 +133,7 @@ function poll() {
 			// click message to show prompt 
 			// for worker, just mark as question and cancel
 			// for requester, it has answer and reject
-			if (g_worker_id == req_id) {
-				click_message_prompt('.pop2');
-			} else {
-				click_message_prompt('.pop1');
-			}
+			click_message_prompt(g_mode);
 			
             // Record the number of messages
 			g_num_seen = data.messages.length;
@@ -184,6 +182,8 @@ function answer_poll() {
 			}
 			
 			scroll_to_view('right');
+			
+			click_message_prompt(g_mode);
 			
             /* Record the number of messages */
 			g_answer_num = data.answers.length;
@@ -252,6 +252,8 @@ function marking_poll() {
 				});
 			});
 			
+			click_message_prompt(g_mode);
+			
             /* Record the number of total questions */
 			g_questioned_num = data.questions.length;
 			/* Update the number of agreed pending */
@@ -294,6 +296,8 @@ function reject_poll() {
 				});
 			});
 			
+			click_message_prompt(g_mode);
+			
             /* Record the number of total rejected */
 			g_rejected_num = data.rejected.length;
 
@@ -317,10 +321,12 @@ function reject_poll() {
  * for requester, it has answer and reject and give points
  */
 function click_message_prompt(mode) {
+	console.log("click_message_prompt");
 	var mess = $(".message span");
 	var prev = null;  // to store previous selected item
 	var now = null;  // to store the current selected item
 	mess.on('click',function(){
+		// mess.off('click');
 		now = list_index($(this));
 
 		if (prev == null) {
@@ -344,7 +350,8 @@ function click_message_prompt(mode) {
 	});
 	
 	$('.close').on('click', function(){
-		deselected($("messagepop"));
+		var obj = find_span_by_index(now);
+		deselected(obj);
 		$("#message_input").removeClass('answering');
 		$("#message_input").attr("placeholder","");
 		$(".reward_options").css("display",'none');
@@ -353,6 +360,7 @@ function click_message_prompt(mode) {
 
 	/* mark message as question */
 	$('.mark_question').on('click',function(){
+		// $('.mark_question').off('click');
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		// if not rejected and not a requester's message
@@ -364,6 +372,7 @@ function click_message_prompt(mode) {
 	
 	/* give reward to one message */
 	$(".give_reward").on('click',function(){
+		$(".give_reward").off('click');
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		// show the options of reward
@@ -371,6 +380,7 @@ function click_message_prompt(mode) {
 		stick_pop('.reward_options', $(this), $('#messages_display'));
 		// reward click handler
 		$(".reward_button").on('click',function(){
+			$(".reward_button").off('click');
 			var button_id = $(this).attr('id');
 			console.log(button_id);
 			var messid = obj.attr("messid");
@@ -387,6 +397,7 @@ function click_message_prompt(mode) {
 	
 	/* mark message as rejected */
 	$(".reject_mess").on('click', function(){
+		$(".reject_mess").off('click');
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		popup_mess_handler(obj, 'rejected');
@@ -395,6 +406,7 @@ function click_message_prompt(mode) {
 	
 	/* answer question, after that, push question and answer to right panel */
 	$('.answer_ques').on('click', function(){
+		$('.answer_ques').off('click');
 		// use list index "now" to find the span that is selected
 		var obj = find_span_by_index(now);
 		if (!obj.hasClass('rejected')) {  // if not rejected
@@ -720,6 +732,12 @@ function reward_poll(){
 				$("#reward-point").text(g_total_reward); //update the banner 
 			}
 			
+			click_message_prompt(g_mode);
+			
+			// hide reward and popup
+			$(".messagepop").css("display",'none');
+			$(".reward_options").css("display",'none');
+			
             // Check for new reward updates (again)
 			if(in_room){
 				reward_poll();
@@ -765,6 +783,7 @@ function reputation_poll(){
 				$("#reputation-score").text(g_reputation); //update the banner 
 			}
 			
+			click_message_prompt(g_mode);
             // Check for new reputation updates (again)
 			
 			reputation_poll();
@@ -780,7 +799,6 @@ function reputation_poll(){
  * For waiting room
  */
 function count_user_handler(){
-	
 	// update user number from server using AJAX
 	$.ajax({
 		url:url_for("/update_user"),
@@ -803,8 +821,8 @@ function count_user_handler(){
 			console.log(g_id_seen, id.length);
 			console.log(g_worker_id);
 			//check for new users 
-			if(!in_room){
-			count_user_handler();
+			if(!in_room){	
+				count_user_handler();
 			}
 		},
 		
@@ -812,16 +830,15 @@ function count_user_handler(){
 }
 
 function add_new_ids(){
-	
 	$.ajax({
 		url:url_for("/new_user"),
 		type:"POST",
 		data: {ids: g_worker_id},
 		success:function(){
 			if(!in_room){
-			setTimeout(add_new_ids,5000);
+				setTimeout(add_new_ids,5000);
 			}
-			},
+		},
 	});
 }
 
@@ -870,6 +887,8 @@ function switch_handler(){
 function switch_back_handler(){
 	$("#go_back_button").click(function(){
 		in_room = 0;
+		add_new_ids();
+		count_user_handler();
 		document.getElementById("waiting_room").style.display = "block";
 		document.getElementById("chatroom_container").style.display = "none";
 		
