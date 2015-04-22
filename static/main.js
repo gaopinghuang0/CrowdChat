@@ -895,7 +895,14 @@ function switch_back_handler(){
 		document.getElementById("chatroom_container").style.display = "none";
 		document.getElementById("banner-block").style.display = "none";	
 	});
+	$.ajax({
+		url: url_for("switch_back"),
+		type:"POST",
+		data:{ task_id:g_task_id}
+		success: 
 	
+	
+	})	
 	
 }
 
