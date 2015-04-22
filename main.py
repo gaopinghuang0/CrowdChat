@@ -15,6 +15,7 @@ import model
 
 # Settings
 PORT             = 8003
+URL_PREFIX = '/%02d'%(PORT % 100)
 DEBUG            = False
 
 # Global data structures
@@ -451,29 +452,29 @@ def atomic_id_append(results, key, g_results):
 def main():
     # Create the Application object
     app = web.Application(
-        [ (r"/",            MainHandler),
-          (r"/new",         NewHandler),
-          (r"/update",      UpdateHandler),
-          (r"/answered",    AnswerHandler),
-          (r"/cast_answer", CastAnswerHandler),
-          (r"/questioned",  QuestionHandler),
-          (r"/cast_mark",   CastMarkHandler),
-          (r"/rejected",    RejectHandler),
-          (r"/cast_reject", CastRejectHandler),
-          (r"/new_reward",  NewRewardHandler),
-          (r"/update_reward", UpdateRewardHandler),
-          (r"/new_reputation", NewReputationHandler),
-          (r"/update_reputation", UpdateReputationHandler),
-          (r"/new_user",    NewUserHandler),
-          (r"/switch",      SwitchHandler),
-          (r"/task",       FetchAllTaskHandler),
-          (r"/update_user", UpdateUserHandler),],
+        [ (r(URL_PREFIX+"/"),            MainHandler),
+          (r(URL_PREFIX+"/new"),         NewHandler),
+          (r(URL_PREFIX+"/update"),      UpdateHandler),
+          (r(URL_PREFIX+"/answered"),    AnswerHandler),
+          (r(URL_PREFIX+"/cast_answer"), CastAnswerHandler),
+          (r(URL_PREFIX+"/questioned"),  QuestionHandler),
+          (r(URL_PREFIX+"/cast_mark"),   CastMarkHandler),
+          (r(URL_PREFIX+"/rejected"),    RejectHandler),
+          (r(URL_PREFIX+"/cast_reject"), CastRejectHandler),
+          (r(URL_PREFIX+"/new_reward"),  NewRewardHandler),
+          (r(URL_PREFIX+"/update_reward"), UpdateRewardHandler),
+          (r(URL_PREFIX+"/new_reputation"), NewReputationHandler),
+          (r(URL_PREFIX+"/update_reputation"), UpdateReputationHandler),
+          (r(URL_PREFIX+"/new_user"),    NewUserHandler),
+          (r(URL_PREFIX+"/switch"),      SwitchHandler),
+          (r(URL_PREFIX+"/task"),       FetchAllTaskHandler),
+          (r(URL_PREFIX+"/update_user"), UpdateUserHandler),],
         template_path = os.path.join(os.path.dirname(__file__), "templates"),
-        static_path   = os.path.join(os.path.dirname(__file__), "static"),
+        static_path   = os.path.join(os.path.dirname(__file__), PORT, "static"),
         debug         = DEBUG,
     )
     # Start the HTTP server and the IOLoop.  (These work together.)
-    app.listen(port=PORT)
+    app.listen(address="128.46.32.82", port=PORT)
     sys.stderr.write("Starting server at http://localhost:%d\n"%PORT)
     ioloop.IOLoop.instance().start()
 

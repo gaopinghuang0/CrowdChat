@@ -12,11 +12,12 @@
 	var req_id ;
 	var g_task_id;
 	var unique_code;
-	var g_url_prefix = '';  // "" means localhost, /03 means 03 port
+	var g_url_prefix = '/10';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
 	var in_room = 0;
 	var g_mode;
-
+	
+	
 jQuery(document).ready(function() {
 	//initiate_chatroom(1);   // for test, task_id is set to 1
 	//document.getElementById("1").click = return_clicked_id("1");
