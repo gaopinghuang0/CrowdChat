@@ -12,7 +12,7 @@
 	var req_id ;
 	var g_task_id;
 	var unique_code;
-	var g_url_prefix = '/10';  // "" means localhost, /03 means 03 port
+	var g_url_prefix = '/03';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
 	var in_room = 0;
 	var g_mode;
@@ -894,16 +894,14 @@ function switch_back_handler(){
 		document.getElementById("waiting_room").style.display = "block";
 		document.getElementById("chatroom_container").style.display = "none";
 		document.getElementById("banner-block").style.display = "none";	
+		// cancel all current waiters
+		$.ajax({
+			url: url_for("switch_back"),
+			type:"POST",
+			data:{ task_id:g_task_id}
+			success: 
+		});	
 	});
-	$.ajax({
-		url: url_for("switch_back"),
-		type:"POST",
-		data:{ task_id:g_task_id}
-		success: 
-	
-	
-	})	
-	
 }
 
 function on_success_switch_chatroom(data){
