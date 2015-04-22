@@ -804,9 +804,16 @@ function count_user_handler(){
 			var html_parts = [];
 			var id = data.data.g_ids;
 			for(var i =0; i < id.length; i++){
+				
 				img = '<img src="./static/head.jpg" >';
-                html = '<div class="user">' + img + '  ' + id[i] + '</div>';
+				if(id[i] == g_worker_id){
+					html = '<div class="user">' + img + '  ' + id[i] + 'me' +'</div>';
+						}
+				else{
+						html = '<div class="user">' + img + '  ' + id[i] +'</div>';
+						}
 				html_parts.push(html);
+				}
 			}
 			document.getElementById("user_number_display").innerHTML = html_parts.join("");
 			//record the number of workers
