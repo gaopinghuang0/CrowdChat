@@ -294,7 +294,11 @@ class NewRewardHandler(web.RequestHandler):
 				 }
 		
 		# update the reward column in table message, and get id
-		worker_id = model.ModifyData(mark_posts).update_reward()
+		worker_id, done = model.ModifyData(mark_posts).update_reward()
+		if not done:
+			self.write({'status': 'failed'})
+		else:
+			self.write({'status': 'success'})
 
 		#fetch reward point of current worker
 		g_messages[index] = model.FetchDataWithInput(mark_posts).fetch_all_worker_reward()

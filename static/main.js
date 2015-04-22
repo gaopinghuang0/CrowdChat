@@ -40,7 +40,7 @@ function initiate_chatroom(task_id) {
 		var worknum = g_worker_id == 'BBB' ? 1:2;
 		$("#roommode").text('(worker'+worknum+')');
 	}
-    console.log(g_worker_id);
+    // console.log(g_worker_id);
     
     if(in_room == 1){
     	poll();  // Check for new messages
@@ -319,7 +319,7 @@ function reject_poll() {
  * for requester, it has answer and reject and give points
  */
 function click_message_prompt(mode) {
-	console.log("click_message_prompt");
+	// console.log("click_message_prompt");
 	var mess = $(".message span");
 	var prev = null;  // to store previous selected item
 	var now = null;  // to store the current selected item
@@ -386,9 +386,9 @@ function click_message_prompt(mode) {
 		$(".reward_button").on('click',function(){
 			$(".reward_button").off('click');
 			var button_id = $(this).attr('id');
-			console.log(button_id);
+			// console.log(button_id);
 			var messid = obj.attr("messid");
-			console.log(messid);
+			// console.log(messid);
 			var reward_point = parseInt(button_id.substr(5));
 			reward_point = typeof reward_point == "number" ? reward_point : 10;
 			
@@ -714,7 +714,11 @@ function update_reward(messid, point) {
     	},
 		type: "POST",
 		success: function(data, text_status, jq_xhr) {
-			alert("return");
+			if (data.status == 'success') {
+				alert('Give reward '+point+' success');
+			} else if (data.status == 'failed') {
+				alert("Failed. Duplicate give reward to the same message.");
+			}
 		},
 		error: function(jq_xhr, text_status, error_thrown) {
 			console.log("ERROR SENDING REWARD POINTS:", error_thrown);
@@ -734,7 +738,7 @@ function reward_poll(){
 			
 			g_total_reward = data.results.total_reward;
 			
-			console.log(data.results,g_worker_id, g_total_reward);
+			// console.log(data.results,g_worker_id, g_total_reward);
 			if (data.results.worker_id == g_worker_id) {
 				$("#reward-point").text(g_total_reward); //update the banner 
 			}
@@ -826,8 +830,8 @@ function count_user_handler(){
 			document.getElementById("user_number_display").innerHTML = html_parts.join("");
 			//record the number of workers
 			g_id_seen = id.length;
-			console.log(g_id_seen, id.length);
-			console.log(g_worker_id);
+			// console.log(g_id_seen, id.length);
+			// console.log(g_worker_id);
 			//check for new users 
 			if(!in_room){	
 				count_user_handler();
@@ -880,9 +884,9 @@ function initiate_task_list(){
 function switch_handler(){
 	$(".enter_chat").click(function(){
 		// if not return normally, disable enter button
-		$(".enter_chat").prop("disabled","true");
+		$(".enter_chat").prop("disabled",true);
 		document.getElementById("banner-block").style.display = "block";
-		console.log("clicked");
+		// console.log("clicked");
 		var task_id = $(this).attr('id');
 		var worker_id = g_worker_id; 
 		in_room = 1;
@@ -915,8 +919,8 @@ function switch_back_handler(){
 			data:{ task_id:g_task_id},
 			success:function(data, text_status, jq_xhr) {
 				if (data.data == 'success') {
-					$(".enter_chat").prop("disabled","false");
-					alert("back");
+					$(".enter_chat").prop("disabled",false);
+					console.log("back");
 				}
 				add_new_ids();
 				count_user_handler();
