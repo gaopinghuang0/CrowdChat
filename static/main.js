@@ -48,7 +48,7 @@ function initiate_chatroom(task_id) {
     	marking_poll();  // Check for new marking question
     	reject_poll();   // Check for new rejecting message
     
-    	 reward_poll();   // check for new reward
+    	// reward_poll();   // check for new reward
   //  	reputation_poll(); // check for new reputation
     }
     
@@ -133,6 +133,7 @@ function poll() {
 			// click message to show prompt 
 			// for worker, just mark as question and cancel
 			// for requester, it has answer and reject
+			set_pop_off();
 			click_message_prompt(g_mode);
 			
             // Record the number of messages
@@ -417,9 +418,9 @@ function click_message_prompt(mode) {
 		if (!obj.hasClass('rejected')) {  // if not rejected
 			// 0. if it has not been marked as question,
 			// mark it as a question
-			if (!obj.hasClass("questioned")) {
+			/*if (!obj.hasClass("questioned")) {
 				popup_mess_handler(obj, 'questioned');
-			}
+			}*/
 			
 			// 1. use the question as the placeholder in the textarea
 			// and add class "answering"
@@ -722,8 +723,6 @@ function update_reward(messid, point) {
 }
 
 function reward_poll(){
-	console.log("in reward");
-	console.log(g_task_id,g_worker_id,g_total_reward);
 	jQuery.ajax({
 		url: url_for("/update_reward"),
 		type: "POST",
@@ -732,10 +731,10 @@ function reward_poll(){
 				total_reward: g_total_reward
     	},
 		success: function(data, text_status, jq_xhr) {
-			console.log(data.results);
-
+			
 			g_total_reward = data.results.total_reward;
 			
+			console.log(data.results,g_worker_id, g_total_reward);
 			if (data.results.worker_id == g_worker_id) {
 				$("#reward-point").text(g_total_reward); //update the banner 
 			}
@@ -880,6 +879,8 @@ function initiate_task_list(){
 	
 function switch_handler(){
 	$(".enter_chat").click(function(){
+		// if not return normally, disable enter button
+		$(".enter_chat").prop("disabled","true");
 		document.getElementById("banner-block").style.display = "block";
 		console.log("clicked");
 		var task_id = $(this).attr('id');
@@ -900,10 +901,10 @@ function switch_back_handler(){
 	$("#go_back_button").click(function(){
 		in_room = 0;
 		initiate_ajax_switch_back();
+		set_pop_off();
 		document.getElementById("waiting_room").style.display = "block";
 		document.getElementById("chatroom_container").style.display = "none";
 		document.getElementById("banner-block").style.display = "none";	
-
 	});
 
 	function initiate_ajax_switch_back(){
@@ -914,6 +915,7 @@ function switch_back_handler(){
 			data:{ task_id:g_task_id},
 			success:function(data, text_status, jq_xhr) {
 				if (data.data == 'success') {
+					$(".enter_chat").prop("disabled","false");
 					alert("back");
 				}
 				add_new_ids();
@@ -921,6 +923,7 @@ function switch_back_handler(){
 			}
 		});	
 	}
+
 }
 
 function on_success_switch_chatroom(data){
@@ -936,6 +939,16 @@ function on_success_switch_chatroom(data){
 
 
 
+// set all jQuery on to off
+function set_pop_off(){
+	$(".message span").off('click');
+	$(".close").off('click');
+	$(".mark_question").off('click');
+	$(".give_reward").off('click');
+	$(".reject_mess").off('click');
+	$(".answer_ques").off('click');
+	$(".reward_button").off('click');
+}
 
 
 })(jQuery);

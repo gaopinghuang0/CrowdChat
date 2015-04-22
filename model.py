@@ -92,15 +92,25 @@ class ModifyData(InOut):
     # insert into table rating_record
     # and update the rating column in table message          
     def update_reward(self):
+		# first check whether this messid has been rewarded
+		# if yes, prevent inserting twice
+		inserted = tuple(db.select("reward_record", where="mess_id=$mess_id",
+										vars={'mess_id':self.mess_id}))
+		if len(inserted) > 0:
+			print "Warning: duplicate insert reward"
+			return inserted[0].worker_id  # we can return worker_id as well
 
         # fetch old points based on the mess_id
         # add old points and new point
-        records = tuple(db.query('''SELECT worker.total_reward as total_reward, worker.worker_id as worker_id from worker, message where worker.worker_id=message.worker_id and
+        records = tuple(db.query('''SELECT worker.total_reward as total_reward, 
+					worker.worker_id as worker_id from worker, message where 
+					worker.worker_id=message.worker_id and
                     message.id=%d'''%(self.mess_id)))[0]
         old_reward, worker_id = records.total_reward, records.worker_id
         db.insert('reward_record', worker_id=worker_id, mess_id=self.mess_id, \
                   record=self.reward_point, edit_time=self.edit_time)
-        db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id}, total_reward=old_reward+self.reward_point)
+        db.update('worker', where="worker_id=$worker_id", vars={'worker_id':worker_id},\
+				total_reward=old_reward+self.reward_point)
         return worker_id  # return worker.id, not worker.worker_id
     
     # insert into table reputation_record
