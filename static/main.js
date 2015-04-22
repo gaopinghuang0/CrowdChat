@@ -47,7 +47,7 @@ function initiate_chatroom(task_id) {
     	marking_poll();  // Check for new marking question
     	reject_poll();   // Check for new rejecting message
     
-    	// reward_poll();   // check for new reward
+    	 reward_poll();   // check for new reward
   //  	reputation_poll(); // check for new reputation
     }
     
