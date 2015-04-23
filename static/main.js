@@ -891,7 +891,7 @@ function switch_handler(){
 	$(".enter_chat").click(function(){
 		// if not return normally, disable enter button
 		$(".enter_chat").prop("disabled",true);
-		document.getElementById("banner-block").style.display = "block";
+//		document.getElementById("banner-block").style.display = "block";
 		// console.log("clicked");
 		var task_id = $(this).attr('id');
 		var worker_id = g_worker_id; 
