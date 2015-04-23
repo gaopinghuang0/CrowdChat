@@ -5,7 +5,7 @@ h1, h2, h3, h4, h5, h6 {
 	padding:0;
 }
 
-#chatroom_container, #waiting_room {
+#chatroom_container, #waiting_room, #preview_mode {
 	margin:0 auto;
 	width:1000px;
 	font-family:verdana, sans-serif;
