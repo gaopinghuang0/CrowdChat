@@ -600,6 +600,8 @@ function get_all_ids() {
 			req_id      : get_id_by_name("reqid"),
 			unique_code : get_id_by_name("uniquecode"),
 			task_id     : get_id_by_name("task_id"),
+			assign_id   : get_id_by_name("assignmentId"),
+			turkSubmitTo: get_id_by_name("turkSubmitTo"),
 	}
 	
 	function randomChoice(){
@@ -963,9 +965,9 @@ function set_pop_off(){
 // post amt
 //
 function post_amt(){
-	var assignment_id = (location.search.match(/assignmentId=(\w+)/)||[])[1];
+	var assignment_id = get_all_ids().assign_id;
 	var test_action = "";
-	var action = (location.search.match(/turkSubmitTo=([^=&]+)/)||[])[1]+"/mturk/externalSubmit";
+	var action = get_all_ids().turkSubmitTo+"/mturk/externalSubmit";
 	if(assignment_id == "ASSIGNMENT_ID_NOT_AVAILABLE"){
 	//	document.getElementById("submit").disabled = true;
 	//	document.getElementById("click_accept_warning").style.display = "block";
@@ -976,14 +978,12 @@ function post_amt(){
 		$("input").prop("disabled",true);
 		}
 	else if ( assignment_id == "undefined" || assignment_id == ""){
-	//	document.getElementById("myfrom").method = "post";
-	//	document.getElementById("myform").action = test_action;
-	//	document.getElementsByClassName("enter_chat").disabled = true;
+		document.getElementById("main_form").method = "post";
+		document.getElementById("main_form").action = test_action;
 		}
 	else{
-	//	document.getElementById("myform").method = "post";
-	//	document.getElementById("myform").action = action;
-
+		document.getElementById("main_form").method = "post";
+		document.getElementById("main_form").action = action;
 		}	
 }
 
