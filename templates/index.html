@@ -29,6 +29,9 @@
 		<img id="logo" src="./static/logo.png" alt="Logo">
 		<img id="user-pic" src="./static/user-pic.png" alt="User Profile Picture">
 		<img id="exit-pic" src="./static/exit.png" alt="Exit">
+    <div class="banner-declaration">
+    Please chat with requester and help them solve the problems they have. This HIT is part of a class project at Purdue University by Gaoping Huang, Meng-Han Wu, Jun Xiang Tee.  Feel free to email us at wu784@purdue.edu with any questions or concerns.  In case you run into any bugs, we will make sure you are paid. 
+    </div>
     <div id="banner-block" style="display:none">
     		<img id="reward-point-pic" src="./static/reward.png" alt="Reward Picture">
 	    	<p id="reward-point">0</p>
@@ -61,6 +64,8 @@
 	<div class="dialog_header"><h2>Task list</h2></div>
 	<div id="task_number_display"></div>
 	</div>
+
+  <div class="clear"></div>
 </div>
 	
 	<!-- hgp's code -->
@@ -72,14 +77,14 @@
 		<div class="instruction">
 		<ol>
 		<li>Chat in the ChatRoom (left) and ask inspiring questions</li>
-		<li>Worker can any message as question if you think it needs requester to answer it.</li>
+		<li>Worker can mark any message as question if you think it needs requester to answer it.</li>
 		<li>Once requester answered one question, the question-answer pair will be copied to the right column. 
     <li>Requester can reject any improper messages or give reward point to any good message.</li>
     <li>Worker's total reward point is shown on the top-right(<img id="instr-reward-pic" src="./static/reward.png" alt="Reward Picture">). Every 10 reward point equal to $0.01.</li>
 		</li>
 		</ol>
 		</div>
-		<input type="button" value="&#8656 Go back" class="common_button" id="go_back_button">
+		<input type="button" title="Go back to waiting room" value="&#8656 Go back" class="common_button" id="go_back_button">
 	</div>
 	
 	<div class="left">
@@ -124,14 +129,17 @@
 	<div id="dialog_confirm"></div>
 
 <!-- Hidden infos that will be sent to AMT -->
+<div class="main_form_div">
 	<form id="main_form" method="POST">
 		<input type="hidden" name="assignmentId" value="{{ infos['assign_id']}}">
 		<input type="hidden" name="workerId" value="{{ infos['worker_id']}}">
 		<input type="hidden" name="task_id">
 		<input type="hidden" name="uniquecode">
-    <input type="submit" class="common_button" name="checkout" value="Check out">
+    <input type="submit" title="Finish work and submit HIT" class="common_button" name="checkout" value="Check out">
 	</form>
-	
+</div>
+
+
 <!-- Hidden infos that will not be sent to AMT -->
 	<div class="hidden_infos">
 		<input type="hidden" name="hitId" value="{{infos['hit_id']}}">	

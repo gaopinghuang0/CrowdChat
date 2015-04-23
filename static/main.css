@@ -10,6 +10,14 @@ h1, h2, h3, h4, h5, h6 {
 	width:1000px;
 	font-family:verdana, sans-serif;
 }
+.banner-declaration {
+	width:500px;
+	background:white;
+	position:absolute;
+	left:300px;
+	top:20px;
+	font-size:20px;
+}
 
 .question {
 	text-align: center;
@@ -287,3 +295,11 @@ li.pending:hover .prompt_content {opacity:1;}
 	
 	width:14%;
 }
+
+/* for checkout */
+.main_form_div {
+	text-align:center;
+	display: block;
+	margin-top:10px;
+}
+

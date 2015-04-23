@@ -14,7 +14,7 @@ import logging, sys, os, json, time
 import model
 
 # Settings
-PORT			 = 8010
+PORT			 = 8003
 URL_PREFIX = r'/%02d'%(PORT % 100)
 DEBUG			 = False
 
