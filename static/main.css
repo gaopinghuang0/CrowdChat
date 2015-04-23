@@ -5,10 +5,18 @@ h1, h2, h3, h4, h5, h6 {
 	padding:0;
 }
 
-#chatroom_container {
+#chatroom_container, #waiting_room {
 	margin:0 auto;
 	width:1000px;
 	font-family:verdana, sans-serif;
+}
+.banner-declaration {
+	width:500px;
+	background:white;
+	position:absolute;
+	left:300px;
+	top:20px;
+	font-size:20px;
 }
 
 .question {
@@ -33,6 +41,11 @@ h1, h2, h3, h4, h5, h6 {
 .common_button {
 	font-size:20px;
 	padding:3px;
+	cursor:pointer;
+}
+
+.small_button {
+	font-size:18px;
 	cursor:pointer;
 }
 
@@ -282,3 +295,11 @@ li.pending:hover .prompt_content {opacity:1;}
 	
 	width:14%;
 }
+
+/* for checkout */
+.main_form_div {
+	text-align:center;
+	display: block;
+	margin-top:10px;
+}
+

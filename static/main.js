@@ -12,7 +12,7 @@
 	var req_id ;
 	var g_task_id;
 	var unique_code;
-	var g_url_prefix = '/10';  // "" means localhost, /03 means 03 port
+	var g_url_prefix = '/03';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
 	var in_room = 0;
 	var g_mode;
@@ -32,7 +32,7 @@ jQuery(document).ready(function() {
 });
 
 function initiate_chatroom(task_id) {
-    $("#message_input").on("keypress", handle_new_message_event);
+    //$("#message_input").on("keypress", handle_new_message_event);
 	$("#messages_display").perfectScrollbar();
 	$("#candidates_container").perfectScrollbar();
 	$("#message_input").select();
@@ -138,6 +138,8 @@ function poll() {
 			// for worker, just mark as question and cancel
 			// for requester, it has answer and reject
 			set_pop_off();
+			set_pop_off();
+    		$("#message_input").on("keypress", handle_new_message_event);
 			click_message_prompt(g_mode);
 			
             // Record the number of messages
@@ -871,7 +873,7 @@ function initiate_task_list(){
 			var html_parts = [];
 			var tasks = data.tasks;
 			for(var i =0; i < data.tasks.length; i++){
-				html = '<div class="task">'  + tasks[i].text + '<input type="button" class="enter_chat" id="'+tasks[i].task_id+'" value="enter"> </div>';
+				html = '<div class="task">'  + tasks[i].text + ' <input type="button" class="enter_chat small_button" id="'+tasks[i].task_id+'" value="enter &#10143"> </div>';
 				
 				html_parts.push(html);	
 			}
@@ -956,6 +958,7 @@ function set_pop_off(){
 	$(".reject_mess").off('click');
 	$(".answer_ques").off('click');
 	$(".reward_button").off('click');
+	$("#message_input").off("keypress");
 }
 // post amt
 //
