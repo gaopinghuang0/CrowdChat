@@ -52,7 +52,7 @@ function initiate_chatroom(task_id) {
     	marking_poll();  // Check for new marking question
     	reject_poll();   // Check for new rejecting message
     
-    	// reward_poll();   // check for new reward
+    	 //reward_poll();   // check for new reward
   //  	reputation_poll(); // check for new reputation
     }
     
@@ -971,7 +971,7 @@ function post_amt(){
 	//	document.getElementById("click_accept_warning").style.display = "block";
 	//		$(".enter_chat").prop("disabled",true);
 		document.getElementById("waiting_room").style.display = "none";
-		document.getElementById("chatroom_container").style.display = "none";
+		document.getElementById("chatroom_container").style.display = "block";
 		initiate_chatroom('RYzvYp');
 		$("input").prop("disabled",true);
 		}
