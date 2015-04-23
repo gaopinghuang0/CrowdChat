@@ -38,6 +38,51 @@
      </div>
 </div>
 
+
+<!-- This div is for preview mode-->
+<div id="preview_mode" style="display:none">
+  <div class="up">
+    <div class="question"><h1 sytle="color:red">This is PREVIEW MODE</h1></div>
+    <div class="requirement"></div>
+    <div class="instruction">
+    <ol>
+    <li>Chat in the ChatRoom (left) and ask inspiring questions</li>
+    <li>Worker can any message as question if you think it needs requester to answer it.</li>
+    <li>Once requester answered one question, the question-answer pair will be copied to the right column. 
+    <li>Requester can reject any improper messages or give reward point to any good message.</li>
+    <li>Worker's total reward point is shown on the top-right(<img id="instr-reward-pic" src="./static/reward.png" alt="Reward Picture">). Every 10 reward point equal to $0.01.</li>
+    </li>
+    </ol>
+    </div>
+  </div>
+  
+  <div class="left">
+    <div class="dialog_header"><h2>ChatRoom </h2></div>
+    <!-- Container for messages -->
+    <div id="messages_display_preview"><ul></ul></div>
+    <!-- Text input for new messages -->
+    <textarea id="message_input_preview" rows=1 disabled></textarea>
+  </div>
+  
+  <div class="right">
+    <div class="dialog_header_preview"><h2>Q/A (answered: <span class="answered_count">0</span>
+     / <span class="total_count">0</span>)</h2></div>
+    <!-- Container for candidate message to be rated by requester -->
+    <div id="candidates_container_preview">
+    <ul></ul>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
 	<!-- MHW's code -->
 <div id="waiting_room">
 	<!-- For question and instruction -->

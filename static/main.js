@@ -25,6 +25,10 @@ jQuery(document).ready(function() {
 		initiate_task_list();
 		count_user_handler();
 		add_new_ids();
+		post_amt();
+
+
+
 });
 
 function initiate_chatroom(task_id) {
@@ -953,6 +957,30 @@ function set_pop_off(){
 	$(".answer_ques").off('click');
 	$(".reward_button").off('click');
 }
+// post amt
+//
+function post_amt(){
+	var assignment_id = (location.search.match(/assignmentId=(\w+)/)||[])[1];
+	var test_action = "";
+	var action = (location.search.match(/turkSubmitTo=([^=&]+)/)||[])[1]+"/mturk/externalSubmit";
+	if(assignment_id == "ASSIGNMENT_ID_NOT_AVAILABLE"){
+	//	document.getElementById("submit").disabled = true;
+	//	document.getElementById("click_accept_warning").style.display = "block";
+	//		$(".enter_chat").prop("disabled",true);
+		document.getElementById("waiting_room").style.display = "none";
+		document.getElementById("chatroom_container").style.display = "none";
+		document.getElementById("preview_mode").style.display = "block";
+		}
+	else if ( assignment_id == "undefined" || assignment_id == ""){
+	//	document.getElementById("myfrom").method = "post";
+	//	document.getElementById("myform").action = test_action;
+	//	document.getElementsByClassName("enter_chat").disabled = true;
+		}
+	else{
+	//	document.getElementById("myform").method = "post";
+	//	document.getElementById("myform").action = action;
 
+		}	
+}
 
 })(jQuery);
