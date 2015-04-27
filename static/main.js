@@ -12,7 +12,7 @@
 	var req_id ;
 	var g_task_id;
 	var unique_code;
-	var g_url_prefix = '/10';  // "" means localhost, /03 means 03 port
+	var g_url_prefix = '/03';  // "" means localhost, /03 means 03 port
 	var MIN_INPUT = 5;
 	var in_room = 0;
 	var g_mode;
@@ -21,18 +21,15 @@
 jQuery(document).ready(function() {
 	//initiate_chatroom(1);   // for test, task_id is set to 1
 	//document.getElementById("1").click = return_clicked_id("1");
-		g_worker_id = get_all_ids().worker_id;	
-		initiate_task_list();
-		count_user_handler();
-		add_new_ids();
-		post_amt();
-
-
+	g_worker_id = get_all_ids().worker_id;	
+	initiate_task_list();
+	count_user_handler();
+	add_new_ids();
+	post_amt();  // run on AMT
 
 });
 
 function initiate_chatroom(task_id) {
-    //$("#message_input").on("keypress", handle_new_message_event);
 	$("#messages_display").perfectScrollbar();
 	$("#candidates_container").perfectScrollbar();
 	$("#message_input").select();
@@ -137,7 +134,6 @@ function poll() {
 			// click message to show prompt 
 			// for worker, just mark as question and cancel
 			// for requester, it has answer and reject
-			set_pop_off();
 			set_pop_off();
     		$("#message_input").on("keypress", handle_new_message_event);
 			click_message_prompt(g_mode);
@@ -950,6 +946,12 @@ function on_success_switch_chatroom(data){
 }
 
 
+function refresh_handler(){
+	$("#refresh_button").click(function(){
+		set_pop_off();
+		initiate_chatroom(g_task_id);
+	});
+}
 
 // set all jQuery on to off
 function set_pop_off(){
@@ -968,22 +970,21 @@ function post_amt(){
 	var assignment_id = get_all_ids().assign_id;
 	var test_action = "";
 	var action = get_all_ids().turkSubmitTo+"/mturk/externalSubmit";
+	var main_form = document.getElementById("main_form");
+
 	if(assignment_id == "ASSIGNMENT_ID_NOT_AVAILABLE"){
-	//	document.getElementById("submit").disabled = true;
-	//	document.getElementById("click_accept_warning").style.display = "block";
-	//		$(".enter_chat").prop("disabled",true);
 		document.getElementById("waiting_room").style.display = "none";
 		document.getElementById("chatroom_container").style.display = "none";
 		initiate_chatroom('RYzvYp');
 		$("input").prop("disabled",true);
 		}
 	else if ( assignment_id == "undefined" || assignment_id == ""){
-		document.getElementById("main_form").method = "post";
-		document.getElementById("main_form").action = test_action;
+		main_form.method = "post";
+		main_form.action = test_action;
 		}
 	else{
-		document.getElementById("main_form").method = "post";
-		document.getElementById("main_form").action = action;
+		main_form.method = "post";
+		main_form.action = action;
 		}	
 }
 
