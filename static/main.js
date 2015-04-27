@@ -937,7 +937,6 @@ function switch_back_handler(){
 			}
 		});	
 	}
-
 }
 
 function on_success_switch_chatroom(data){
@@ -954,9 +953,24 @@ function on_success_switch_chatroom(data){
 
 function refresh_handler(){
 	$("#refresh_button").click(function(){
+		initiate_ajax_refresh();
 		set_pop_off();
-		initiate_chatroom(g_task_id);
 	});
+
+	function initiate_ajax_refresh(){
+		// cancel all current waiters
+		$.ajax({
+			url: url_for("switch_back"),
+			type:"POST",
+			data:{ task_id:g_task_id},
+			success:function(data, text_status, jq_xhr) {
+				if (data.data == 'success') {
+					console.log("refresh");
+				}
+				initiate_chatroom(g_task_id);
+			}
+		});	
+	}
 }
 
 // set all jQuery on to off
