@@ -149,6 +149,7 @@ function poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			if (in_room) setTimeout(poll, 1000);
 		}
 	});
 	
@@ -199,6 +200,7 @@ function answer_poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			if (in_room) setTimeout(answer_poll, 1000);
 		}
 	});
 }
@@ -267,6 +269,7 @@ function marking_poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			if (in_room) setTimeout(marking_poll, 1000);
 		}
 	});
 }
@@ -309,6 +312,7 @@ function reject_poll() {
 		error: function(jq_xhr, text_status, error_thrown) {
             /* There was an error.  Report it on the console and then retry in 1000 ms (1 second) */
 			console.log("ERROR FETCHING UPDATE:", error_thrown);
+			if (in_room) setTimeout(reject_poll, 1000);
 		}
 	});
 }
@@ -756,6 +760,7 @@ function reward_poll(){
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING REWARD UPDATE:", error_thrown);
+			if (in_room) setTimeout(reward_poll, 1000);
 		}
 	});
 }
@@ -801,6 +806,7 @@ function reputation_poll(){
 		error: function(jq_xhr, text_status, error_thrown) {
             // There was an error.  Report it on the console and then retry in 1000 ms (1 second)
 			console.log("ERROR FETCHING REPUTATION UPDATE:", error_thrown);
+			if (in_room) setTimeout(reputation_poll, 1000);
 		}
 	});
 }
