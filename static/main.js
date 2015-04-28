@@ -49,7 +49,8 @@ function initiate_chatroom(task_id) {
     	answer_poll(); // Check for new answer messages
     	marking_poll();  // Check for new marking question
     	reject_poll();   // Check for new rejecting message
-    	// reward_poll();   // check for new reward
+
+    	 //reward_poll();   // check for new reward
   //  	reputation_poll(); // check for new reputation
     }
     
@@ -895,7 +896,7 @@ function switch_handler(){
 	$(".enter_chat").click(function(){
 		// if not return normally, disable enter button
 		$(".enter_chat").prop("disabled",true);
-		document.getElementById("banner-block").style.display = "block";
+//		document.getElementById("banner-block").style.display = "block";
 		// console.log("clicked");
 		var task_id = $(this).attr('id');
 		var worker_id = g_worker_id; 
@@ -971,7 +972,7 @@ function post_amt(){
 
 	if(assignment_id == "ASSIGNMENT_ID_NOT_AVAILABLE"){
 		document.getElementById("waiting_room").style.display = "none";
-		document.getElementById("chatroom_container").style.display = "none";
+		document.getElementById("chatroom_container").style.display = "block";
 		initiate_chatroom('RYzvYp');
 		$("input").prop("disabled",true);
 		}
