@@ -36,7 +36,7 @@ g_time = time.time()
 class MainHandler(web.RequestHandler):
 	def get(self):
 		infos = {
-				 'worker_id': self.get_argument('workerId', 'AAA'),
+				 'worker_id': self.get_argument('workerId', 'BBB'),
 				 'assign_id': self.get_argument('assignmentId','bbb'),
 				 'hit_id': self.get_argument('hitId','vvv'),
 				 'turkSubmitTo': self.get_argument('turkSubmitTo','ddd'),
