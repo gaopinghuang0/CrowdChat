@@ -26,7 +26,9 @@ jQuery(document).ready(function() {
 		count_user_handler();
 		add_new_ids();
 		post_amt();
-
+		$("#refresh").click(function(){
+			location.reload();
+		});
 
 
 });
