@@ -21,6 +21,7 @@
 jQuery(document).ready(function() {
 	//initiate_chatroom(1);   // for test, task_id is set to 1
 	//document.getElementById("1").click = return_clicked_id("1");
+
 	g_worker_id = get_all_ids().worker_id;	
 	initiate_task_list();
 	count_user_handler();
