@@ -60,7 +60,7 @@ class ModifyData(InOut):
 	
 	# insert new message
 	def insert_message(self):
-		if len(self.message) > 0:
+		if isinstance(self.message, int) or len(self.message) > 0:
 			db.insert('message', text=self.message, worker_id=self.worker_id, \
 						task_id=self.task_id, edit_time=self.edit_time)
 

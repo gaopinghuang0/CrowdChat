@@ -1,4 +1,5 @@
 import crowdlib as cl, crowdlib_settings
+from main import URL_PREFIX 
 
 hit_type = cl.create_hit_type(
 	title = "CrowdChat",
@@ -8,6 +9,6 @@ hit_type = cl.create_hit_type(
 
 hit = hit_type.create_hit(
 
-	url = "https://crowd.ecn.purdue.edu/10/",
+	url = ("https://crowd.ecn.purdue.edu"+URL_PREFIX+"/"),
 	height = 800	
 	)

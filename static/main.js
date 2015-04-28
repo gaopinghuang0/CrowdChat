@@ -27,6 +27,7 @@ jQuery(document).ready(function() {
 	add_new_ids();
 	post_amt();  // run on AMT
 
+    //refresh_handler();
 });
 
 function initiate_chatroom(task_id) {
@@ -48,7 +49,6 @@ function initiate_chatroom(task_id) {
     	answer_poll(); // Check for new answer messages
     	marking_poll();  // Check for new marking question
     	reject_poll();   // Check for new rejecting message
-    
     	// reward_poll();   // check for new reward
   //  	reputation_poll(); // check for new reputation
     }
@@ -947,29 +947,6 @@ function on_success_switch_chatroom(data){
 		var task_id = g_task_id;
 		//console.log(task_id);
 		initiate_chatroom(task_id);
-	}
-}
-
-
-function refresh_handler(){
-	$("#refresh_button").click(function(){
-		initiate_ajax_refresh();
-		set_pop_off();
-	});
-
-	function initiate_ajax_refresh(){
-		// cancel all current waiters
-		$.ajax({
-			url: url_for("switch_back"),
-			type:"POST",
-			data:{ task_id:g_task_id},
-			success:function(data, text_status, jq_xhr) {
-				if (data.data == 'success') {
-					console.log("refresh");
-				}
-				initiate_chatroom(g_task_id);
-			}
-		});	
 	}
 }
 
