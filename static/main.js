@@ -28,6 +28,7 @@ jQuery(document).ready(function() {
 	add_new_ids();
 	post_amt();  // run on AMT
 
+    $("#message_input").on("keypress", handle_new_message_event);
     //refresh_handler();
 });
 
