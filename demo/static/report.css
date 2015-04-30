@@ -1,0 +1,128 @@
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: "PT Serif","Georgia","Helvetica Neue",Arial,sans-serif;
+}
+
+body {
+	background: #222;
+}
+
+.top_banner {
+	width:100%;
+	padding: 5px 0 5px 0;
+	background:green;
+}
+
+.top_banner h1 {
+	display:inline-block;
+	margin: 0 0 0 55px;
+	padding: 0;
+	color:white;
+	font-size: 60px;
+}
+
+.main {
+	font-family:"PT Serif",Georgia,Times,"Times New Roman",serif;
+	width:1000px;
+	margin:0 auto;
+}
+
+.report {
+	background:#eee;
+	padding:0 55px 20px 55px;
+}
+
+.video_container {
+	margin:10px;
+	margin-left:235px;
+	display:block;
+}
+
+.report h2 {
+	padding:0;
+	margin:0;
+	display: inline-block;
+}
+.medium-title {
+	font-family: Bauer Bodoni, serif;
+	font-size: 42px;
+	font-weight: bold;
+	text-align: center;
+	margin: 10px;
+	color: #4682B4;
+	margin-left: 0px;
+}
+
+.small-title {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 30px;
+	font-weight: bold;
+	margin-bottom: 0px;
+	margin: 0;
+	padding: 0;
+}
+
+.text {
+	font-size: 20px;
+	margin: 0;
+	padding: 0;
+}
+
+.image-text {
+font-family: "Times New Roman", Times, serif;
+  font-size: 18px;
+  font-style: italic;
+  /* text-align: center; */
+  margin: 0;
+  padding-left: 100px;
+  padding-right: 100px;
+  padding-top: 10px;
+  padding-bottom: 0px;
+}
+
+
+.text-title {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 24px;
+	font-weight: bold;
+	font-style: italic;
+	margin: 0;
+	padding: 0;
+}
+
+.UI-image {
+	width: 880px;
+	height: 474px;
+	border: 1px solid #000;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 20px;
+}
+
+.reference {
+	color: green;
+	text-decoration: none;
+}
+
+.logo {
+	display: inline-block;
+}
+
+.logo img{
+	position:relative;
+	width:75px;
+	left:500px;
+}
+
+#footer {
+	color:#fff;
+	width:100%;
+	padding: 10px 0 5px 0;
+	background:green;
+	text-align:center;
+}
+
+a:hover {
+	color: red;
+}
